@@ -476,7 +476,7 @@ int
 armpmu_generic_request_irq(int irq, irq_handler_t *handle_irq)
 {
         return request_irq(irq, *handle_irq,
-                        IRQF_DISABLED | IRQF_NOBALANCING,
+                        IRQF_NOBALANCING | IRQF_NO_THREAD,
                         "armpmu", NULL);
 }
 
