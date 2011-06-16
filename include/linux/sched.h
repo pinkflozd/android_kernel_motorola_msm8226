@@ -1334,6 +1334,7 @@ struct task_struct {
 #endif
 
 	unsigned int policy;
+	int migrate_disable;
 	cpumask_t cpus_allowed;
 
 #ifdef CONFIG_PREEMPT_RCU
@@ -1676,9 +1677,6 @@ struct task_struct {
 	struct rcu_head put_rcu;
 #endif
 };
-
-/* Future-safe accessor for struct task_struct's cpus_allowed. */
-#define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
 
 #ifdef CONFIG_PREEMPT_RT_FULL
 static inline bool cur_pf_disabled(void) { return current->pagefault_disabled; }
@@ -2838,6 +2836,15 @@ extern struct atomic_notifier_head migration_notifier_head;
 #ifdef CONFIG_ANDROID_BG_SCAN_MEM
 extern struct raw_notifier_head bgtsk_migration_notifier_head;
 #endif
+
+/* Future-safe accessor for struct task_struct's cpus_allowed. */
+static inline const struct cpumask *tsk_cpus_allowed(struct task_struct *p)
+{
+	if (p->migrate_disable)
+		return cpumask_of(task_cpu(p));
+
+	return &p->cpus_allowed;
+}
 
 extern long sched_setaffinity(pid_t pid, const struct cpumask *new_mask);
 extern long sched_getaffinity(pid_t pid, struct cpumask *mask);
