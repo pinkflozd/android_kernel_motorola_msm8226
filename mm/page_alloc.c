@@ -2244,8 +2244,8 @@ retry_compact:
 		struct page *page;
 
 		/* Page migration frees to the PCP lists but we want merging */
-		drain_pages(get_cpu());
-		put_cpu();
+		drain_pages(get_cpu_light());
+		put_cpu_light();
 
 		page = get_page_from_freelist(gfp_mask, nodemask,
 				order, zonelist, high_zoneidx,
