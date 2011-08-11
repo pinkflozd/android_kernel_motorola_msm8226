@@ -232,13 +232,8 @@ static inline int is_csd_lock_waiting(void)
 }
 #endif
 
-#ifndef CONFIG_PREEMPT_RT_FULL
-# define get_cpu_light()	get_cpu()
-# define put_cpu_light()	put_cpu()
-#else
-# define get_cpu_light()	({ migrate_disable(); smp_processor_id(); })
-# define put_cpu_light()	migrate_enable()
-#endif
+#define get_cpu_light()		({ migrate_disable(); smp_processor_id(); })
+#define put_cpu_light()		migrate_enable()
 
 /*
  * Callback to arch code if there's nosmp or maxcpus=0 on the
