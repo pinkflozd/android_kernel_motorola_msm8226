@@ -373,3 +373,4 @@ unsigned long reclaim_clean_pages_from_list(struct zone *zone,
 					    struct list_head *page_list);
 #define ALLOC_PFMEMALLOC	0x100 /* Caller has PF_MEMALLOC set */
 
+extern void set_pageblock_order(void);
