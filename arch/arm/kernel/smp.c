@@ -252,7 +252,7 @@ void __ref cpu_die(void)
 	mb();
 
 	/* Tell __cpu_die() that this CPU is now safe to dispose of */
-	complete(&cpu_died);
+	RCU_NONIDLE(complete(&cpu_died));
 
 	/*
 	 * actual CPU shutdown procedure is at least platform (if not
@@ -368,6 +368,11 @@ void __init smp_cpus_done(unsigned int max_cpus)
 
 void __init smp_prepare_boot_cpu(void)
 {
+	unsigned int cpu = smp_processor_id();
+
+	per_cpu(cpu_data, cpu).idle = current;
+
+	set_my_cpu_offset(per_cpu_offset(smp_processor_id()));
 }
 
 void __init smp_prepare_cpus(unsigned int max_cpus)
