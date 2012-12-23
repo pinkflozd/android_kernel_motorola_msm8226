@@ -434,3 +434,4 @@ obj-$(CONFIG_PERFMAP) += perfmap.o
 
 obj-$(CONFIG_LCD_KCAL) += board_kcal.o kcal_ctrl.o
 obj-$(CONFIG_INTELLI_PLUG) += intelli_plug.o
+obj-$(CONFIG_FORCE_FAST_CHARGE) += fastchg.o
