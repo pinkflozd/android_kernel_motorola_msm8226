@@ -238,6 +238,10 @@ static unsigned int msm_cpufreq_get_freq(unsigned int cpu)
 #define LOW_CPUCLOCKS_FREQ_MIN	162000
 #endif
 
+#ifdef CONFIG_LOW_CPUCLOCKS
+#define LOW_CPUCLOCKS_FREQ_MIN	162000
+#endif
+
 static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 {
 	int cur_freq;
