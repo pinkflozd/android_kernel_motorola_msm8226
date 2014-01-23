@@ -29,8 +29,15 @@
 #include <linux/interrupt.h>
 #include <linux/powersuspend.h>
 #include "logger.h"
+#include <linux/powersuspend.h>
 
 #include <asm/ioctls.h>
+
+static unsigned int log_enabled = 1;
+static unsigned int log_always_on = 0;
+
+module_param(log_enabled, uint, S_IWUSR | S_IRUGO);
+module_param(log_always_on, uint, S_IWUSR | S_IRUGO);
 
 #ifndef CONFIG_LOGCAT_SIZE
 #define CONFIG_LOGCAT_SIZE 256
