@@ -40,6 +40,7 @@
 #include <linux/init.h>
 #include <linux/miscdevice.h>
 #include <linux/delay.h>
+#include <linux/random.h>
 #include <linux/slab.h>
 #include <linux/random.h>
 #include <asm/uaccess.h>
