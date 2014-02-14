@@ -369,15 +369,12 @@ enum page_type {
 	META_FLUSH,
 };
 
-<<<<<<< HEAD
 /*
  * Android sdcard emulation flags
  */
 #define F2FS_ANDROID_EMU_NOCASE		0x00000001
 
-=======
 #define is_read_io(rw)	(((rw) & 1) == READ)
->>>>>>> 93dfe2a... f2fs: refactor bio-related operations
 struct f2fs_bio_info {
 	struct bio *bio;		/* bios to merge */
 	sector_t last_block_in_bio;	/* last block number */
