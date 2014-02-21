@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,28 +18,14 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
  */
+
 /*
- * Airgo Networks, Inc proprietary. All rights reserved.
  * This file limUtils.h contains the utility definitions
  * LIM uses.
  * Author:        Chandra Modumudi
@@ -398,10 +384,14 @@ tANI_BOOLEAN limIsconnectedOnDFSChannel(tANI_U8 currentChannel);
 tANI_U8 limGetCurrentOperatingChannel(tpAniSirGlobal pMac);
 
 #ifdef WLAN_FEATURE_11AC
-tANI_BOOLEAN limCheckVHTOpModeChange( tpAniSirGlobal pMac, 
+tANI_BOOLEAN limCheckVHTOpModeChange( tpAniSirGlobal pMac,
                                       tpPESession psessionEntry, tANI_U8 chanWidth, tANI_U8 staId);
 #endif
-
+tANI_BOOLEAN limCheckHTChanBondModeChange(tpAniSirGlobal pMac,
+                                                  tpPESession psessionEntry,
+                                                  tANI_U8 beaconSecChanWidth,
+                                                  tANI_U8 currentSecChanWidth,
+                                                  tANI_U8 staId);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 
 typedef enum
@@ -500,5 +490,6 @@ tANI_U8 limGetShortSlotFromPhyMode(tpAniSirGlobal pMac, tpPESession psessionEntr
 void limCleanUpDisassocDeauthReq(tpAniSirGlobal pMac, tANI_U8 *staMac, tANI_BOOLEAN cleanRxPath);
 
 tANI_BOOLEAN limCheckDisassocDeauthAckPending(tpAniSirGlobal pMac, tANI_U8 *staMac);
-
+void limUpdateOBSSScanParams(tpPESession psessionEntry ,
+             tDot11fIEOBSSScanParameters *pOBSSScanParameters);
 #endif /* __LIM_UTILS_H */

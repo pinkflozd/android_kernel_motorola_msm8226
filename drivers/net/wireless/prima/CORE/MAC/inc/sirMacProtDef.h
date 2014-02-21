@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,25 +18,12 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014 Qualcomm Atheros, Inc.
+ * All Rights Reserved.
+ * Qualcomm Atheros Confidential and Proprietary.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
  */
 
 
@@ -412,6 +399,7 @@
 #define SIR_MAC_HT_INFO_EID      61
 #define SIR_MAC_HT_INFO_EID_MIN    0
 #define SIR_MAC_HT_INFO_EID_MAX    255
+#define SIR_MAC_OBSS_SCAN_PARAMETERS_EID 74
 
 #ifdef WLAN_FEATURE_11AC
 #define SIR_MAC_VHT_CAPABILITIES_EID   191
@@ -460,6 +448,9 @@
 #define SIR_MAX_NOA_ATTR_LEN        31
 #define SIR_MAX_NOA_DESCR           2
 #define SIR_P2P_IE_HEADER_LEN       6
+
+#define SIR_MAC_CISCO_OUI "\x00\x40\x96"
+#define SIR_MAC_CISCO_OUI_SIZE 3
 
 // min size of wme oui header: oui(3) + type + subtype + version
 #define SIR_MAC_OUI_WME_HDR_MIN       6
@@ -1685,6 +1676,9 @@ typedef  struct sSirMacRpiReportIE
 } tSirMacRpiReportIE, *tpSirMacRpiReportIE;
 
 #define SIR_MAC_MAX_SUPP_RATES            32
+
+#define SIR_MAC_MAX_SUPP_CHANNELS            100
+#define SIR_MAC_MAX_SUPP_OPER_CLASSES        32
 
 #define SIR_MAC_MAX_EXTN_CAP               8
 

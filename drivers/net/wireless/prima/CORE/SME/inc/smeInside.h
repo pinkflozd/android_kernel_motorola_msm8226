@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,25 +18,11 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
  */
 
 #if !defined( __SMEINSIDE_H )
@@ -139,7 +125,12 @@ typedef struct TdlsLinkEstablishInfo
   tANI_U8 uapsdQueues;
   tANI_U8 maxSp;
   tANI_U8 isBufSta;
+  tANI_U8 isOffChannelSupported;
   tANI_U8 isResponder;
+  tANI_U8 supportedChannelsLen;
+  tANI_U8 supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
+  tANI_U8 supportedOperClassesLen;
+  tANI_U8 supportedOperClasses[SIR_MAC_MAX_SUPP_OPER_CLASSES];
 } tTdlsLinkEstablishCmdInfo;
 
 typedef struct TdlsAddStaInfo
@@ -241,7 +232,8 @@ tSmeCmd *smeGetCommandBuffer( tpAniSirGlobal pMac );
 void smePushCommand( tpAniSirGlobal pMac, tSmeCmd *pCmd, tANI_BOOLEAN fHighPriority );
 void smeProcessPendingQueue( tpAniSirGlobal pMac );
 void smeReleaseCommand(tpAniSirGlobal pMac, tSmeCmd *pCmd);
-void purgeSmeSessionCmdList(tpAniSirGlobal pMac, tANI_U32 sessionId);
+void purgeSmeSessionCmdList(tpAniSirGlobal pMac, tANI_U32 sessionId,
+        tDblLinkList *pList);
 tANI_BOOLEAN smeCommandPending(tpAniSirGlobal pMac);
 tANI_BOOLEAN pmcProcessCommand( tpAniSirGlobal pMac, tSmeCmd *pCommand );
 //this function is used to abort a command where the normal processing of the command
@@ -339,5 +331,6 @@ eHalStatus csrCreateRoamScanChannelList(tpAniSirGlobal pMac,
                                                 tANI_U8 numChannels,
                                                 const eCsrBand eBand);
 #endif
+void activeListCmdTimeoutHandle(void *userData);
 
 #endif //#if !defined( __SMEINSIDE_H )

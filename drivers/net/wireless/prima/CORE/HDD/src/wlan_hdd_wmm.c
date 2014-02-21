@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,25 +18,11 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
  */
 
 /*============================================================================
@@ -81,6 +67,7 @@
 #include <linux/semaphore.h>
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_softap_tx_rx.h>
+#include <vos_sched.h>
 
 // change logging behavior based upon debug flag
 #ifdef HDD_WMM_DEBUG
@@ -107,7 +94,7 @@
 #define DHCP_DESTINATION_PORT 0x4300
 
 static sme_QosWmmUpType hddWmmDscpToUpMap[WLAN_HDD_MAX_DSCP+1];
-
+#define HDD_WMM_UP_TO_AC_MAP_SIZE 8
 const v_U8_t hddWmmUpToAcMap[] = {
    WLANTL_AC_BE,
    WLANTL_AC_BK,
@@ -242,8 +229,8 @@ static void hdd_wmm_enable_tl_uapsd (hdd_wmm_qos_context_t* pQosContext)
    pAc->wmmAcIsUapsdEnabled = psb;
 
    VOS_TRACE(VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO,
-             "%s: Enabled UAPSD in TL srv_int=%ld "
-             "susp_int=%ld dir=%d AC=%d",
+             "%s: Enabled UAPSD in TL srv_int=%d "
+             "susp_int=%d dir=%d AC=%d",
              __func__,
              service_interval,
              suspension_interval,
@@ -473,7 +460,7 @@ void hdd_wmm_inactivity_timer_cb( v_PVOID_t pUserData )
     currentTrafficCnt = pAdapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[pQosContext->acType];
 
     VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_WARN,
-            FL("WMM inactivity Timer for AC=%d, currentCnt=%d, prevCnt=%d\n"),
+            FL("WMM inactivity Timer for AC=%d, currentCnt=%d, prevCnt=%d"),
             acType, (int)currentTrafficCnt, (int)pAc->wmmPrevTrafficCnt);
     if (pAc->wmmPrevTrafficCnt == currentTrafficCnt)
     {
@@ -692,7 +679,7 @@ static eHalStatus hdd_wmm_sme_callback (tHalHandle hHal,
       // Check if the inactivity interval is specified
       if (pCurrentQosInfo && pCurrentQosInfo->inactivity_interval) {
          VOS_TRACE(VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO,
-                 "%s: Inactivity timer value = %d for AC=%d\n",
+                 "%s: Inactivity timer value = %d for AC=%d",
                  __func__, pCurrentQosInfo->inactivity_interval, acType);
          hdd_wmm_enable_inactivity_timer(pQosContext, pCurrentQosInfo->inactivity_interval);
       }
@@ -842,7 +829,7 @@ static eHalStatus hdd_wmm_sme_callback (tHalHandle hHal,
 
    case SME_QOS_STATUS_SETUP_NOT_QOS_AP_RSP:
       VOS_TRACE( VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
-                 "%s: Setup failed, not a QoS AP\n",
+                 "%s: Setup failed, not a QoS AP",
                  __func__);
       if (!HDD_WMM_HANDLE_IMPLICIT == pQosContext->handle)
       {
@@ -1215,7 +1202,7 @@ static eHalStatus hdd_wmm_sme_callback (tHalHandle hHal,
 
    default:
       VOS_TRACE( VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
-                 "%s: unexpected SME Status=%d\n",
+                 "%s: unexpected SME Status=%d",
                  __func__, smeStatus );
       VOS_ASSERT(0);
    }
@@ -1495,7 +1482,7 @@ static void hdd_wmm_do_implicit_qos(struct work_struct *work)
 
    default:
       VOS_TRACE( VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
-                 "%s: unexpected SME Status=%d\n",
+                 "%s: unexpected SME Status=%d",
                  __func__, smeStatus );
       VOS_ASSERT(0);
    }
@@ -1870,7 +1857,7 @@ v_U16_t hdd_hostapd_select_queue(struct net_device * dev, struct sk_buff *skb)
    /*Get the Station ID*/
    if (VOS_STATUS_SUCCESS != hdd_softap_GetStaId(pAdapter, pDestMacAddress, &STAId))
    {
-      VOS_TRACE( VOS_MODULE_ID_HDD_SOFTAP, VOS_TRACE_LEVEL_INFO,
+      VOS_TRACE( VOS_MODULE_ID_HDD_SOFTAP, VOS_TRACE_LEVEL_ERROR,
             "%s: Failed to find right station", __func__);
       *pSTAId = HDD_WLAN_INVALID_STA_ID;
       goto done;
@@ -1926,6 +1913,13 @@ v_U16_t hdd_wmm_select_queue(struct net_device * dev, struct sk_buff *skb)
    v_USHORT_t queueIndex;
    hdd_adapter_t *pAdapter =  WLAN_HDD_GET_PRIV_PTR(dev);
 
+   if (isWDresetInProgress()) {
+       VOS_TRACE( VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_WARN,
+                  FL("called during WDReset"));
+       skb->priority = SME_QOS_WMM_UP_BE;
+       return HDD_LINUX_AC_BE;
+   }
+
    /*Get the Station ID*/
    if (WLAN_HDD_IBSS == pAdapter->device_mode)
    {
@@ -1936,7 +1930,7 @@ v_U16_t hdd_wmm_select_queue(struct net_device * dev, struct sk_buff *skb)
             hdd_Ibss_GetStaId(&pAdapter->sessionCtx.station,
                                pDestMacAddress, pSTAId))
        {
-          VOS_TRACE( VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_INFO,
+          VOS_TRACE( VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
                      "%s: Failed to find right station pDestMacAddress: "
                      MAC_ADDRESS_STR , __func__,
                      MAC_ADDR_ARRAY(pDestMacAddress->bytes));
@@ -1953,7 +1947,8 @@ v_U16_t hdd_wmm_select_queue(struct net_device * dev, struct sk_buff *skb)
       if (pAdapter->isVosLowResource && is_dhcp_packet(skb))
       {
          VOS_TRACE(VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_WARN,
-                   "%s: Making priority of DHCP packet as VOICE", __func__);
+                   "%s: BestEffort Tx Queue is 3/4th full"
+                   " Make DHCP packet's pri as VO", __func__);
          up = SME_QOS_WMM_UP_VO;
          ac = hddWmmUpToAcMap[up];
       }
@@ -2446,7 +2441,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts( hdd_adapter_t* pAdapter,
         default:
           // we didn't get back one of the SME_QOS_STATUS_MODIFY_* status codes
           VOS_TRACE( VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
-                     "%s: unexpected SME Status=%d\n", __func__, smeStatus );
+                     "%s: unexpected SME Status=%d", __func__, smeStatus );
           VOS_ASSERT(0);
           return HDD_WLAN_WMM_STATUS_MODIFY_FAILED;
       }
@@ -2468,7 +2463,16 @@ hdd_wlan_wmm_status_e hdd_wmm_addts( hdd_adapter_t* pAdapter,
    // we assume the tspec has already been validated by the caller
 
    pQosContext->handle = handle;
-   pQosContext->acType = hddWmmUpToAcMap[pTspec->ts_info.up];
+   if (pTspec->ts_info.up < HDD_WMM_UP_TO_AC_MAP_SIZE)
+      pQosContext->acType = hddWmmUpToAcMap[pTspec->ts_info.up];
+   else {
+      VOS_TRACE(VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
+                "%s: ts_info.up (%d) larger than max value (%d), "
+                "use default acType (%d)",
+                __func__, pTspec->ts_info.up,
+                HDD_WMM_UP_TO_AC_MAP_SIZE - 1, hddWmmUpToAcMap[0]);
+      pQosContext->acType = hddWmmUpToAcMap[0];
+   }
    pQosContext->pAdapter = pAdapter;
    pQosContext->qosFlowId = 0;
    pQosContext->magic = HDD_WMM_CTX_MAGIC;
@@ -2524,7 +2528,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts( hdd_adapter_t* pAdapter,
       // we didn't get back one of the SME_QOS_STATUS_SETUP_* status codes
       hdd_wmm_free_context(pQosContext);
       VOS_TRACE( VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
-                 "%s: unexpected SME Status=%d\n", __func__, smeStatus );
+                 "%s: unexpected SME Status=%d", __func__, smeStatus );
       VOS_ASSERT(0);
       return HDD_WLAN_WMM_STATUS_SETUP_FAILED;
    }
@@ -2635,7 +2639,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts( hdd_adapter_t* pAdapter,
    default:
       // we didn't get back one of the SME_QOS_STATUS_RELEASE_* status codes
       VOS_TRACE( VOS_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
-                 "%s: unexpected SME Status=%d\n", __func__, smeStatus );
+                 "%s: unexpected SME Status=%d", __func__, smeStatus );
       VOS_ASSERT(0);
       status = HDD_WLAN_WMM_STATUS_RELEASE_FAILED;
    }

@@ -1,31 +1,31 @@
 /*
-  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
-  *
-  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
-  *
-  *
-  * Permission to use, copy, modify, and/or distribute this software for
-  * any purpose with or without fee is hereby granted, provided that the
-  * above copyright notice and this permission notice appear in all
-  * copies.
-  *
-  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
-  * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
-  * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
-  * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
-  * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
-  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-  * PERFORMANCE OF THIS SOFTWARE.
-*/
-/*
-* Copyright (c) 2012-2013 Qualcomm Atheros, Inc.
-* All Rights Reserved.
-* Qualcomm Atheros Confidential and Proprietary.
-*/
+ * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
+ *
+ * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
+ *
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
 
 /*
- * Airgo Networks, Inc proprietary. All rights reserved.
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
+ */
+
+/*
  * This file schBeaconProcess.cc contains beacon processing related
  * functions
  *
@@ -344,6 +344,7 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
      tPowerdBm regMax = 0,maxTxPower = 0;
 #endif
 
+    vos_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
     beaconParams.paramChangeBitmap = 0;
 
     if(eLIM_STA_IN_IBSS_ROLE == psessionEntry->limSystemRole )
@@ -461,7 +462,7 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
           (psessionEntry->limSystemRole == eLIM_STA_IN_IBSS_ROLE) )
     {
         /* Channel Switch information element updated */
-        if(pBeacon->channelSwitchPresent || 
+        if(pBeacon->channelSwitchPresent ||
             pBeacon->propIEinfo.propChannelSwitchPresent)
         {
             limUpdateChannelSwitch(pMac, pBeacon, psessionEntry);
@@ -470,8 +471,40 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
         {
             limCancelDot11hChannelSwitch(pMac, psessionEntry);
         }
+        // check for HT capability
+        pStaDs = dphLookupHashEntry(pMac, pMh->sa, &aid,
+                                    &psessionEntry->dph.dphHashTable);
+        if (pStaDs != NULL)
+        {
+           /* Following check is related to HT40 on 2.4GHz mode*/
+           if ((pStaDs->htSecondaryChannelOffset !=
+                pBeacon->HTInfo.secondaryChannelOffset) &&
+                (IS_HT40_OBSS_SCAN_FEATURE_ENABLE) &&
+                (psessionEntry->currentOperChannel <= RF_CHAN_14))
+           {
+               VOS_TRACE( VOS_MODULE_ID_PE, VOS_TRACE_LEVEL_INFO,
+                        FL(" Current Secondarychanoffset %d received "
+                        " secondaryChannelOffset %d, staIdx = %d"),
+                        pStaDs->htSecondaryChannelOffset,
+                        pBeacon->HTInfo.secondaryChannelOffset,
+                        pStaDs->staIndex);
+              if (eANI_BOOLEAN_TRUE ==(limCheckHTChanBondModeChange(pMac,
+                                              psessionEntry,
+                                              pBeacon->HTInfo.secondaryChannelOffset,
+                                              pStaDs->htSecondaryChannelOffset,
+                                              pStaDs->staIndex)))
+              {
+                  pStaDs->htSupportedChannelWidthSet =
+                             pBeacon->HTInfo.recommendedTxWidthSet;
+                  pStaDs->htSecondaryChannelOffset =
+                             pBeacon->HTInfo.secondaryChannelOffset;
+              }
+           }
+        }
+        else
+           PELOGE(schLog(pMac, LOGE, FL("Self Entry missing in Hash Table"));)
     }
-
+    /* TODO : Below condition checks can be merged with the if */
 #ifdef WLAN_FEATURE_11AC
     if ((psessionEntry->limSystemRole == eLIM_STA_ROLE) ||
         (psessionEntry->limSystemRole == eLIM_BT_AMP_STA_ROLE) ||
@@ -490,11 +523,11 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
                 eHT_CHANNEL_WIDTH_40MHZ: eHT_CHANNEL_WIDTH_20MHZ;
              if (operMode != pBeacon->OperatingMode.chanWidth)
              {
-                PELOG1(limLog(pMac, LOG1,
+                PELOG1(schLog(pMac, LOG1,
                          FL(" received OpMode Chanwidth %d, staIdx = %d"),
                          pBeacon->OperatingMode.chanWidth,
                          pStaDs->staIndex);)
-                   PELOG1(limLog(pMac, LOG1, FL(" MAC - %0x:%0x:%0x:%0x:%0x:%0x"),
+                   PELOG1(schLog(pMac, LOG1, FL(" MAC - %0x:%0x:%0x:%0x:%0x:%0x"),
                             pMh->sa[0],
                             pMh->sa[1],
                             pMh->sa[2],
@@ -504,7 +537,7 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
 
                    if (pBeacon->OperatingMode.chanWidth == eHT_CHANNEL_WIDTH_80MHZ)
                    {
-                      PELOG1(limLog(pMac, LOG1,
+                      PELOG1(schLog(pMac, LOG1,
                                FL("Updating the CH Width to 80MHz"));)
                          pStaDs->vhtSupportedChannelWidthSet =
                          WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
@@ -512,7 +545,7 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
                    }
                    else if (pBeacon->OperatingMode.chanWidth == eHT_CHANNEL_WIDTH_40MHZ)
                    {
-                      PELOG1(limLog(pMac, LOG1,
+                      PELOG1(schLog(pMac, LOG1,
                                FL("Updating the CH Width to 40MHz"));)
                          pStaDs->vhtSupportedChannelWidthSet =
                          WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
@@ -521,7 +554,7 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
                    else if (pBeacon->OperatingMode.chanWidth ==
                          eHT_CHANNEL_WIDTH_20MHZ)
                    {
-                      PELOG1(limLog(pMac, LOG1,
+                      PELOG1(schLog(pMac, LOG1,
                                FL("Updating the CH Width to 20MHz"));)
                          pStaDs->vhtSupportedChannelWidthSet =
                          WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
@@ -537,11 +570,11 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
              operMode = pStaDs->vhtSupportedChannelWidthSet;
              if (operMode != pBeacon->VHTOperation.chanWidth)
              {
-                PELOG1(limLog(pMac, LOG1,
+                PELOG1(schLog(pMac, LOG1,
                          FL(" received VHTOP CHWidth %d staIdx = %d"),
                          pBeacon->VHTOperation.chanWidth,
                          pStaDs->staIndex);)
-                   PELOG1(limLog(pMac, LOG1, FL(" MAC - %0x:%0x:%0x:%0x:%0x:%0x"),
+                   PELOG1(schLog(pMac, LOG1, FL(" MAC - %0x:%0x:%0x:%0x:%0x:%0x"),
                             pMh->sa[0],
                             pMh->sa[1],
                             pMh->sa[2],
@@ -552,7 +585,7 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
                    if (pBeacon->VHTOperation.chanWidth ==
                          WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ)
                    {
-                      PELOG1(limLog(pMac, LOG1,
+                      PELOG1(schLog(pMac, LOG1,
                                FL("Updating the CH Width to 80MHz"));)
                          pStaDs->vhtSupportedChannelWidthSet =
                          WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
@@ -566,7 +599,7 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
                          WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
                       if (pBeacon->HTCaps.supportedChannelWidthSet)
                       {
-                         PELOG1(limLog(pMac, LOG1,
+                         PELOG1(schLog(pMac, LOG1,
                                   FL("Updating the CH Width to 40MHz"));)
                             pStaDs->htSupportedChannelWidthSet =
                             eHT_CHANNEL_WIDTH_40MHZ;
@@ -574,7 +607,7 @@ static void __schBeaconProcessForSession( tpAniSirGlobal      pMac,
                       }
                       else
                       {
-                         PELOG1(limLog(pMac, LOG1,
+                         PELOG1(schLog(pMac, LOG1,
                                   FL("Updating the CH Width to 20MHz"));)
                             pStaDs->htSupportedChannelWidthSet =
                             eHT_CHANNEL_WIDTH_20MHZ;
@@ -684,6 +717,7 @@ void schBeaconProcess(tpAniSirGlobal pMac, tANI_U8* pRxPacketInfo, tpPESession p
     static tSchBeaconStruct beaconStruct;
     tUpdateBeaconParams beaconParams;
     tpPESession pAPSession = NULL;
+    vos_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
     beaconParams.paramChangeBitmap = 0;
 
     pMac->sch.gSchBcnRcvCnt++;

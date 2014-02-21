@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,34 +18,20 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013 Qualcomm Atheros, Inc.
+ * All Rights Reserved.
+ * Qualcomm Atheros Confidential and Proprietary.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
  */
+
 
 /** ------------------------------------------------------------------------- *
     ------------------------------------------------------------------------- *
     \file csrApi.h
 
     Exports and types for the Common Scan and Roaming Module interfaces.
-
-    Copyright (C) 2006 Airgo Networks, Incorporated
    ========================================================================== */
 #ifndef CSRAPI_H__
 #define CSRAPI_H__
@@ -202,6 +188,16 @@ typedef enum
    eCSR_SCAN_FOUND_PEER,
 }eCsrScanStatus;
 
+/* Reason to abort the scan
+ * The reason can used later to decide whether to update the scan results
+ * to upper layer or not
+ */
+typedef enum
+{
+    eCSR_SCAN_ABORT_DEFAULT,
+    eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE, //Scan aborted due to band change
+}eCsrAbortReason;
+
 #define CSR_SCAN_TIME_DEFAULT       0
 #define CSR_VALUE_IGNORED           0xFFFFFFFF
 #define CSR_RSN_PMKID_SIZE          16
@@ -263,6 +259,10 @@ typedef struct tagCsrStaParams
     tSirVHTCap VHTCap;
     tANI_U8    uapsd_queues;
     tANI_U8    max_sp;
+    tANI_U8    supported_channels_len;
+    tANI_U8    supported_channels[SIR_MAC_MAX_SUPP_CHANNELS];
+    tANI_U8    supported_oper_classes_len;
+    tANI_U8    supported_oper_classes[SIR_MAC_MAX_SUPP_OPER_CLASSES];
 }tCsrStaParams;
 
 typedef struct tagCsrScanRequest
@@ -460,6 +460,12 @@ typedef enum
 #ifdef FEATURE_WLAN_LFR
     eCSR_ROAM_PMK_NOTIFY,
 #endif
+#ifdef FEATURE_WLAN_LFR_METRICS
+    eCSR_ROAM_PREAUTH_INIT_NOTIFY,
+    eCSR_ROAM_PREAUTH_STATUS_SUCCESS,
+    eCSR_ROAM_PREAUTH_STATUS_FAILURE,
+    eCSR_ROAM_HANDOVER_SUCCESS,
+#endif
 #ifdef FEATURE_WLAN_TDLS
     eCSR_ROAM_TDLS_STATUS_UPDATE,
     eCSR_ROAM_RESULT_MGMT_TX_COMPLETE_IND,
@@ -564,9 +570,6 @@ typedef enum
     eCSR_ROAM_RESULT_TEARDOWN_TDLS_PEER_IND,
     eCSR_ROAM_RESULT_DELETE_ALL_TDLS_PEER_IND,
     eCSR_ROAM_RESULT_LINK_ESTABLISH_REQ_RSP,
-#ifdef FEATURE_WLAN_TDLS_OXYGEN_DISAPPEAR_AP
-    eCSR_ROAM_RESULT_TDLS_DISAPPEAR_AP_IND,
-#endif
 #endif
 
 }eCsrRoamResult;
@@ -872,8 +875,13 @@ typedef struct tagCsrRoamProfile
     tANI_U8 *pWAPIReqIE;   //If not null, it has the IE byte stream for WAPI
 #endif /* FEATURE_WLAN_WAPI */
 
-    tANI_U32 nAddIEScanLength;   //The byte count in the pAddIE for scan (at the time of join)
-    tANI_U8 *pAddIEScan;       //If not null, it has the IE byte stream for additional IE, which can be WSC IE and/or P2P IE
+    //The byte count in the pAddIE for scan (at the time of join)
+    tANI_U32 nAddIEScanLength;
+    /* Additional IE information.
+     * It has the IE byte stream for additional IE,
+     * which can be WSC IE and/or P2P IE
+     */
+    tANI_U8  addIEScan[SIR_MAC_MAX_IE_LENGTH+2];       //Additional IE information.
     tANI_U32 nAddIEAssocLength;   //The byte count in the pAddIE for assoc
     tANI_U8 *pAddIEAssoc;       //If not null, it has the IE byte stream for additional IE, which can be WSC IE and/or P2P IE
 
@@ -1122,10 +1130,10 @@ typedef struct tagCsrConfigParam
 
     tANI_U8   enableTxLdpc;
 
-    tANI_BOOLEAN  enableOxygenNwk;
-
     tANI_U8 isAmsduSupportInAMPDU;
     tANI_U8 nSelect5GHzMargin;
+
+    tANI_U8 isCoalesingInIBSSAllowed;
 
 }tCsrConfigParam;
 
@@ -1362,7 +1370,12 @@ typedef struct tagCsrLinkEstablishParams
     tANI_U8 uapsdQueues;
     tANI_U8 maxSp;
     tANI_U8 isBufSta;
+    tANI_U8 isOffChannelSupported;
     tANI_U8 isResponder;
+    tANI_U8 supportedChannelsLen;
+    tANI_U8 supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
+    tANI_U8 supportedOperClassesLen;
+    tANI_U8 supportedOperClasses[SIR_MAC_MAX_SUPP_OPER_CLASSES];
 }tCsrTdlsLinkEstablishParams;
 
 typedef struct tagCsrTdlsSendMgmt

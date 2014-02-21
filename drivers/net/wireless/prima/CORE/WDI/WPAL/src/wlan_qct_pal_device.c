@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,25 +18,11 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
  */
 
 /**=========================================================================
@@ -77,7 +63,11 @@
 #include <linux/irqreturn.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
+#ifdef EXISTS_MSM_SMSM
 #include <mach/msm_smsm.h>
+#else
+#include <soc/qcom/smsm.h>
+#endif
 #include "wlan_qct_pal_api.h"
 #include "wlan_qct_pal_device.h"
 #include "wlan_hdd_main.h"
@@ -478,7 +468,8 @@ wpt_status wpalWriteRegister
       WPAL_TRACE(eWLAN_MODULE_DAL_DATA, eWLAN_PAL_TRACE_LEVEL_ERROR,
                  "%s: Register address 0x%0x out of range 0x%0x - 0x%0x",
                  __func__, address,
-                 gpEnv->wcnss_memory->start, gpEnv->wcnss_memory->end);
+                 (u32) gpEnv->wcnss_memory->start,
+                 (u32) gpEnv->wcnss_memory->end);
       return eWLAN_PAL_STATUS_E_INVAL;
    }
 
@@ -526,7 +517,8 @@ wpt_status wpalReadRegister
       WPAL_TRACE(eWLAN_MODULE_DAL_DATA, eWLAN_PAL_TRACE_LEVEL_ERROR,
                  "%s: Register address 0x%0x out of range 0x%0x - 0x%0x",
                  __func__, address,
-                 gpEnv->wcnss_memory->start, gpEnv->wcnss_memory->end);
+                 (u32) gpEnv->wcnss_memory->start,
+                 (u32) gpEnv->wcnss_memory->end);
       return eWLAN_PAL_STATUS_E_INVAL;
    }
 
@@ -577,11 +569,12 @@ wpt_status wpalWriteDeviceMemory
       WPAL_TRACE(eWLAN_MODULE_DAL_DATA, eWLAN_PAL_TRACE_LEVEL_ERROR,
                  "%s: Memory address 0x%0x len %d out of range 0x%0x - 0x%0x",
                  __func__, address, len,
-                 gpEnv->wcnss_memory->start, gpEnv->wcnss_memory->end);
+                 (u32) gpEnv->wcnss_memory->start,
+                 (u32) gpEnv->wcnss_memory->end);
       return eWLAN_PAL_STATUS_E_INVAL;
    }
 
-   memcpy(gpEnv->mmio + (address - WCNSS_BASE_ADDRESS), s_buffer, len);
+   vos_mem_copy(gpEnv->mmio + (address - WCNSS_BASE_ADDRESS), s_buffer, len);
    wmb();
 
    return eWLAN_PAL_STATUS_SUCCESS;
@@ -621,11 +614,12 @@ wpt_status wpalReadDeviceMemory
       WPAL_TRACE(eWLAN_MODULE_DAL_DATA, eWLAN_PAL_TRACE_LEVEL_ERROR,
                  "%s: Memory address 0x%0x len %d out of range 0x%0x - 0x%0x",
                  __func__, address, len,
-                 gpEnv->wcnss_memory->start, gpEnv->wcnss_memory->end);
+                 (u32) gpEnv->wcnss_memory->start,
+                 (u32) gpEnv->wcnss_memory->end);
       return eWLAN_PAL_STATUS_E_INVAL;
    }
 
-   memcpy(d_buffer, gpEnv->mmio + (address - WCNSS_BASE_ADDRESS), len);
+   vos_mem_copy(d_buffer, gpEnv->mmio + (address - WCNSS_BASE_ADDRESS), len);
    rmb();
 
    return eWLAN_PAL_STATUS_SUCCESS;

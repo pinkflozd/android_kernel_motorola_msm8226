@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,28 +18,14 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
  */
+
 /*
- * Airgo Networks, Inc proprietary. All rights reserved.
  * This file parserApi.cc contains the code for parsing
  * 802.11 messages.
  * Author:        Pierre Vandwalle
@@ -944,11 +930,27 @@ PopulateDot11fVHTExtBssLoad(tpAniSirGlobal      pMac,
 
 tSirRetStatus
 PopulateDot11fExtCap(tpAniSirGlobal      pMac,
-                           tDot11fIEExtCap  *pDot11f)
+                           tDot11fIEExtCap  *pDot11f,
+                           tpPESession   psessionEntry)
 {
+    tANI_U32            val;
+
     pDot11f->present = 1;
-    pDot11f->operModeNotification = 1;
-    
+#ifdef WLAN_FEATURE_11AC
+    if (psessionEntry->vhtCapability)
+        pDot11f->operModeNotification = 1;
+#endif
+       /* while operating in 2.4GHz only then STA need to advertize
+               the bss co-ex capability*/
+    if (psessionEntry->currentOperChannel <= RF_CHAN_14)
+    {
+       if (wlan_cfgGetInt(pMac, WNI_CFG_CHANNEL_BONDING_24G, &val) !=
+                         eSIR_SUCCESS)
+            PELOGE(limLog(pMac, LOGE, FL("could not retrieve "
+                                         "24G Chan bond Length \n"));)
+       if (TRUE == val)
+           pDot11f->bssCoexistMgmtSupport = 1;
+    }
     return eSIR_SUCCESS;
 }
 
@@ -2444,7 +2446,11 @@ sirConvertAssocRespFrame2Struct(tpAniSirGlobal pMac,
         limLogVHTOperation(pMac, &pAssocRsp->VHTOperation);
     }
 #endif
-
+    if(ar.OBSSScanParameters.present)
+    {
+       vos_mem_copy( &pAssocRsp->OBSSScanParameters, &ar.OBSSScanParameters,
+                      sizeof( tDot11fIEOBSSScanParameters));
+    }
     return eSIR_SUCCESS;
 
 } // End sirConvertAssocRespFrame2Struct.
@@ -3432,7 +3438,7 @@ sirConvertBeaconFrame2Struct(tpAniSirGlobal       pMac,
     {
         //CCX Tx Power
         pBeaconStruct->ccxTxPwr.present = 1;
-        palCopyMemory( pMac->hHdd, &pBeaconStruct->ccxTxPwr,
+        vos_mem_copy(&pBeaconStruct->ccxTxPwr,
                                    &pBeacon->CCXTxmitPower,
                                    sizeof(tDot11fIECCXTxmitPower));
     }
@@ -3465,7 +3471,12 @@ sirConvertBeaconFrame2Struct(tpAniSirGlobal       pMac,
                       sizeof( tDot11fIEWiderBWChanSwitchAnn));
     }      
 #endif
-
+    if(pBeacon->OBSSScanParameters.present)
+    {
+       vos_mem_copy( &pBeaconStruct->OBSSScanParameters,
+                     &pBeacon->OBSSScanParameters,
+                     sizeof( tDot11fIEOBSSScanParameters));
+    }
     vos_mem_free(pBeacon);
     return eSIR_SUCCESS;
 
@@ -4169,7 +4180,7 @@ tSirRetStatus PopulateDot11fCCXCckmOpaque( tpAniSirGlobal pMac,
         {
             pDot11f->present  = 1;
             pDot11f->num_data = pCCKMie->cckmIEdata[ idx + 1 ] - 4; // Dont include OUI
-            palCopyMemory( pMac->hHdd, pDot11f->data,
+            vos_mem_copy(pDot11f->data,
                            pCCKMie->cckmIEdata + idx + 2 + 4,    // EID, len, OUI
                            pCCKMie->cckmIEdata[ idx + 1 ] - 4 ); // Skip OUI
         }

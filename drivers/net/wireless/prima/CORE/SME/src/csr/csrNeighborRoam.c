@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,25 +18,11 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
  */
 
 /** ------------------------------------------------------------------------- * 
@@ -375,7 +361,7 @@ VOS_STATUS csrNeighborRoamUpdateFastRoamingEnabled(tpAniSirGlobal pMac, const v_
             if (!VOS_IS_STATUS_SUCCESS(vosStatus))
             {
                 //err msg
-                smsLog(pMac, LOGW, FL(" Couldn't register csrNeighborRoamNeighborLookupDOWNCallback with TL: Status = %d"), vosStatus);
+                smsLog(pMac, LOGE, FL(" Couldn't register csrNeighborRoamNeighborLookupDOWNCallback with TL: Status = %d"), vosStatus);
                 vosStatus = VOS_STATUS_E_FAILURE;
             }
 #ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
@@ -436,7 +422,7 @@ VOS_STATUS csrNeighborRoamUpdateCcxModeEnabled(tpAniSirGlobal pMac, const v_BOOL
             if (!VOS_IS_STATUS_SUCCESS(vosStatus))
             {
                 //err msg
-                smsLog(pMac, LOGW, FL(" Couldn't register csrNeighborRoamNeighborLookupDOWNCallback with TL: Status = %d"), vosStatus);
+                smsLog(pMac, LOGE, FL(" Couldn't register csrNeighborRoamNeighborLookupDOWNCallback with TL: Status = %d"), vosStatus);
                 vosStatus = VOS_STATUS_E_FAILURE;
             }
 #ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
@@ -509,7 +495,7 @@ VOS_STATUS csrNeighborRoamSetLookupRssiThreshold(tpAniSirGlobal pMac, v_U8_t nei
            if (!VOS_IS_STATUS_SUCCESS(vosStatus))
            {
               //err msg
-              smsLog(pMac, LOGW, FL(" Couldn't register csrNeighborRoamNeighborLookupDOWNCallback with TL: Status = %d"), vosStatus);
+              smsLog(pMac, LOGE, FL(" Couldn't register csrNeighborRoamNeighborLookupDOWNCallback with TL: Status = %d"), vosStatus);
               vosStatus = VOS_STATUS_E_FAILURE;
            }
 #ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
@@ -632,7 +618,8 @@ static void csrNeighborRoamResetCfgListChanScanControlInfo(tpAniSirGlobal pMac)
         /* Abort any ongoing scan */
         if (eANI_BOOLEAN_TRUE == pNeighborRoamInfo->scanRspPending)
         {
-                csrScanAbortMacScan(pMac);
+            csrScanAbortMacScan(pMac, pNeighborRoamInfo->csrSessionId,
+                                eCSR_SCAN_ABORT_DEFAULT);
         }
         pNeighborRoamInfo->scanRspPending = eANI_BOOLEAN_FALSE;
 
@@ -919,8 +906,10 @@ eHalStatus csrNeighborRoamAddBssIdToPreauthFailList(tpAniSirGlobal pMac, tSirMac
         smsLog(pMac, LOGE, FL("Preauth fail list already full.. Cannot add new one"));
         return eHAL_STATUS_FAILURE;
     }
-    vos_mem_copy(pNeighborRoamInfo->FTRoamInfo.preAuthFailList.macAddress[pNeighborRoamInfo->FTRoamInfo.preAuthFailList.numMACAddress],
-                        bssId, sizeof(tSirMacAddr));
+    vos_mem_copy(pNeighborRoamInfo->FTRoamInfo.preAuthFailList.macAddress[
+                  pNeighborRoamInfo->FTRoamInfo.preAuthFailList.numMACAddress],
+                 bssId,
+                 sizeof(tSirMacAddr));
     pNeighborRoamInfo->FTRoamInfo.preAuthFailList.numMACAddress++;
     
     return eHAL_STATUS_SUCCESS;
@@ -983,6 +972,10 @@ static eHalStatus csrNeighborRoamIssuePreauthReq(tpAniSirGlobal pMac)
     tpCsrNeighborRoamControlInfo    pNeighborRoamInfo = &pMac->roam.neighborRoamInfo;
     eHalStatus status = eHAL_STATUS_SUCCESS;
     tpCsrNeighborRoamBSSInfo    pNeighborBssNode;
+
+#ifdef FEATURE_WLAN_LFR_METRICS
+    tCsrRoamInfo *roamInfo;
+#endif
     
     /* This must not be true here */
     VOS_ASSERT(pNeighborRoamInfo->FTRoamInfo.preauthRspPending == eANI_BOOLEAN_FALSE);
@@ -995,11 +988,30 @@ static eHalStatus csrNeighborRoamIssuePreauthReq(tpAniSirGlobal pMac)
 
     if (NULL == pNeighborBssNode)
     {
-        smsLog(pMac, LOG1, FL("Roamable AP list is empty.. "));
+        smsLog(pMac, LOGW, FL("Roamable AP list is empty.. "));
         return eHAL_STATUS_FAILURE;
     }
     else
     {
+#ifdef FEATURE_WLAN_LFR_METRICS
+        /* LFR metrics - pre-auth initiation metric.
+           Send the event to supplicant that pre-auth was initiated */
+        roamInfo = vos_mem_malloc(sizeof(tCsrRoamInfo));
+        if (NULL == roamInfo)
+        {
+            smsLog(pMac, LOG1, FL("Memory allocation failed!"));
+        }
+        else
+        {
+            vos_mem_copy((void *)roamInfo->bssid,
+                (void *)pNeighborBssNode->pBssDescription->bssId,
+                sizeof(tCsrBssid));
+            csrRoamCallCallback(pMac, pNeighborRoamInfo->csrSessionId,
+                                roamInfo, 0, eCSR_ROAM_PREAUTH_INIT_NOTIFY, 0);
+            vos_mem_free(pRoamInfo);
+        }
+#endif
+
         status = csrRoamEnqueuePreauth(pMac, pNeighborRoamInfo->csrSessionId, pNeighborBssNode->pBssDescription,
                 eCsrPerformPreauth, eANI_BOOLEAN_TRUE);
 
@@ -1052,6 +1064,10 @@ eHalStatus csrNeighborRoamPreauthRspHandler(tpAniSirGlobal pMac, tSirRetStatus l
     eHalStatus  preauthProcessed = eHAL_STATUS_SUCCESS;
     tpCsrNeighborRoamBSSInfo pPreauthRspNode = NULL;
 
+#ifdef FEATURE_WLAN_LFR_METRICS
+    tCsrRoamInfo *roamInfo;
+#endif
+
     if (eANI_BOOLEAN_FALSE == pNeighborRoamInfo->FTRoamInfo.preauthRspPending)
     {
             
@@ -1090,6 +1106,25 @@ eHalStatus csrNeighborRoamPreauthRspHandler(tpAniSirGlobal pMac, tSirRetStatus l
         smsLog(pMac, LOG1, FL("After Pre-Auth: BSSID "MAC_ADDRESS_STR", Ch:%d"),
                MAC_ADDR_ARRAY(pPreauthRspNode->pBssDescription->bssId),
                (int)pPreauthRspNode->pBssDescription->channelId);
+
+#ifdef FEATURE_WLAN_LFR_METRICS
+        /* LFR metrics - pre-auth completion metric.
+           Send the event to supplicant that pre-auth successfully completed */
+        roamInfo = vos_mem_malloc(sizeof(tCsrRoamInfo));
+        if (NULL == roamInfo)
+        {
+            smsLog(pMac, LOG1, FL("Memory allocation failed!"));
+        }
+        else
+        {
+            vos_mem_copy((void *)roamInfo->bssid,
+                (void *)pPreauthRspNode->pBssDescription->bssId,
+                sizeof(tCsrBssid));
+            csrRoamCallCallback(pMac, pNeighborRoamInfo->csrSessionId,
+                roamInfo, 0, eCSR_ROAM_PREAUTH_STATUS_SUCCESS, 0);
+            vos_mem_free(pRoamInfo);
+        }
+#endif
 
         /* Preauth competer successfully. Insert the preauthenticated node to tail of preAuthDoneList */
         csrNeighborRoamRemoveRoamableAPListEntry(pMac, &pNeighborRoamInfo->roamableAPList, pPreauthRspNode);
@@ -1130,6 +1165,26 @@ eHalStatus csrNeighborRoamPreauthRspHandler(tpAniSirGlobal pMac, tSirRetStatus l
                 {
             status = csrNeighborRoamAddBssIdToPreauthFailList(pMac, pNeighborBssNode->pBssDescription->bssId);
                 }
+
+#ifdef FEATURE_WLAN_LFR_METRICS
+                /* LFR metrics - pre-auth completion metric. Send the event
+                   to supplicant that pre-auth successfully completed */
+                roamInfo = vos_mem_malloc(sizeof(tCsrRoamInfo));
+                if (NULL == roamInfo)
+                {
+                    smsLog(pMac, LOG1, FL("Memory allocation failed!"));
+                }
+                else
+                {
+                    vos_mem_copy((void *)roamInfo->bssid,
+                        (void *)pNeighborBssNode->pBssDescription->bssId,
+                        sizeof(tCsrBssid));
+                    csrRoamCallCallback(pMac, pNeighborRoamInfo->csrSessionId,
+                        roamInfo, 0, eCSR_ROAM_PREAUTH_STATUS_FAILURE, 0);
+                    vos_mem_free(pRoamInfo);
+                }
+#endif
+
             /* Now we can free this node */
             csrNeighborRoamFreeNeighborRoamBSSNode(pMac, pNeighborBssNode);
             }
@@ -1584,7 +1639,7 @@ static tANI_BOOLEAN csrNeighborRoamProcessScanResults(tpAniSirGlobal pMac,
         )
         {
             VOS_TRACE (VOS_MODULE_ID_SME, VOS_TRACE_LEVEL_INFO,
-                       "%s: [INFOLOG] potential candidate to roam immediately (diff=%d, expected=%d)", 
+                       "%s: [INFOLOG] potential candidate to roam immediately (diff=%ld, expected=%d)",
                        __func__, abs(abs(CurrAPRssi) - abs(pScanResult->BssDescriptor.rssi)),
                        immediateRoamRssiDiff);
             roamNow = eANI_BOOLEAN_TRUE;
@@ -1672,7 +1727,6 @@ static VOS_STATUS csrNeighborRoamHandleEmptyScanResult(tpAniSirGlobal pMac)
 
     /* Stop neighbor scan timer */
     vos_timer_stop(&pNeighborRoamInfo->neighborScanTimer);
-
     /*
      * Increase the neighbor lookup threshold by 3 dB
      * after every scan cycle. NOTE: uEmptyScanCount
@@ -1792,7 +1846,7 @@ static VOS_STATUS csrNeighborRoamHandleEmptyScanResult(tpAniSirGlobal pMac)
             }
             else
             {
-                smsLog(pMac, LOGE, FL("Empty scan refresh timer started (%ld ms)"),
+                smsLog(pMac, LOGE, FL("Empty scan refresh timer started (%d ms)"),
                         (pNeighborRoamInfo->cfgParams.emptyScanRefreshPeriod));
             }
         }
@@ -1812,7 +1866,7 @@ static VOS_STATUS csrNeighborRoamHandleEmptyScanResult(tpAniSirGlobal pMac)
             }
             else
             {
-                smsLog(pMac, LOG2, FL("Neighbor results refresh timer started (%ld ms)"),
+                smsLog(pMac, LOG2, FL("Neighbor results refresh timer started (%d ms)"),
                         (pNeighborRoamInfo->cfgParams.neighborResultsRefreshPeriod * PAL_TIMER_TO_MS_UNIT));
             }
         }
@@ -2298,11 +2352,11 @@ eHalStatus csrNeighborRoamIssueBgScanRequest(tpAniSirGlobal pMac,
             pMac->roam.neighborRoamInfo.roamChannelInfo.currentChanIndex);
 
     //send down the scan req for 1 channel on the associated SSID
-    palZeroMemory(pMac->hHdd, &scanReq, sizeof(tCsrScanRequest));
+    vos_mem_set(&scanReq, sizeof(tCsrScanRequest), 0);
     /* Fill in the SSID Info */
     scanReq.SSIDs.numOfSSIDs = 1;
     scanReq.SSIDs.SSIDList = vos_mem_malloc(sizeof(tCsrSSIDInfo) * scanReq.SSIDs.numOfSSIDs);
-    if(NULL == scanReq.SSIDs.SSIDList)
+    if (NULL == scanReq.SSIDs.SSIDList)
     {
        //err msg
        smsLog(pMac, LOGE, FL("Couldn't allocate memory for the SSID..Freeing memory allocated for Channel List"));
@@ -2352,7 +2406,7 @@ eHalStatus csrNeighborRoamIssueBgScanRequest(tpAniSirGlobal pMac,
 
     vos_mem_free(scanReq.SSIDs.SSIDList);
     if (1 == pBgScanParams->ChannelInfo.numOfChannels)
-        NEIGHBOR_ROAM_DEBUG(pMac, LOG1, FL("Channel List Address = %08x, Actual index = %d"),
+        NEIGHBOR_ROAM_DEBUG(pMac, LOG1, FL("Channel List Address = %p, Actual index = %d"),
                 &pMac->roam.neighborRoamInfo.roamChannelInfo.currentChannelListInfo.ChannelList[0], 
                 pMac->roam.neighborRoamInfo.roamChannelInfo.currentChanIndex);
 
@@ -2398,7 +2452,7 @@ eHalStatus csrNeighborRoamPerformBgScan(tpAniSirGlobal pMac, tANI_U32 sessionId)
 
     if (pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList)
     {
-        NEIGHBOR_ROAM_DEBUG(pMac, LOG1, FL("Channel List Address = %08x"), &pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList[0]);
+        NEIGHBOR_ROAM_DEBUG(pMac, LOG1, FL("Channel List Address = %p"), &pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList[0]);
     }
     else 
     {
@@ -2423,7 +2477,7 @@ eHalStatus csrNeighborRoamPerformBgScan(tpAniSirGlobal pMac, tANI_U32 sessionId)
 
     /* Need to perform scan here before getting the list */
 
-    palZeroMemory(pMac->hHdd, &bgScanParams, sizeof(tCsrBGScanRequest));
+    vos_mem_set(&bgScanParams, sizeof(tCsrBGScanRequest), 0);
 
     channel = pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList[pNeighborRoamInfo->roamChannelInfo.currentChanIndex];
     bgScanParams.ChannelInfo.numOfChannels = 1;
@@ -2477,7 +2531,7 @@ eHalStatus csrNeighborRoamPerformContiguousBgScan(tpAniSirGlobal pMac, tANI_U32 
     tANI_U8   *pInChannelList = NULL;
     tANI_U8   tmpChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 
-    palZeroMemory(pMac->hHdd, &bgScanParams, sizeof(tCsrBGScanRequest));
+    vos_mem_set(&bgScanParams, sizeof(tCsrBGScanRequest), 0);
 
     /* Contiguously scan all channels from valid list */
     NEIGHBOR_ROAM_DEBUG(pMac, LOG2, "%s: get valid channel list", __func__);
@@ -2504,8 +2558,8 @@ eHalStatus csrNeighborRoamPerformContiguousBgScan(tpAniSirGlobal pMac, tANI_U32 
         pInChannelList = tmpChannelList;
     }
 
-    channelList = vos_mem_malloc( numOfChannels );
-    if( NULL == channelList )
+    channelList = vos_mem_malloc(numOfChannels);
+    if ( NULL == channelList )
     {
         smsLog(pMac, LOGE, FL("could not allocate memory for channelList"));
         return eHAL_STATUS_FAILURE;
@@ -2525,7 +2579,7 @@ eHalStatus csrNeighborRoamPerformContiguousBgScan(tpAniSirGlobal pMac, tANI_U32 
     status = csrNeighborRoamIssueBgScanRequest(pMac, &bgScanParams,
                                                sessionId, csrNeighborRoamContiguousScanRequestCallback);
 
-    vos_mem_free( channelList );
+    vos_mem_free(channelList);
 
     if (eHAL_STATUS_SUCCESS != status)
     {
@@ -2877,7 +2931,7 @@ VOS_STATUS csrNeighborRoamCreateChanListFromNeighborReport(tpAniSirGlobal pMac)
     tpCsrNeighborRoamControlInfo    pNeighborRoamInfo = &pMac->roam.neighborRoamInfo;
     tANI_U8         numChannels = 0, i = 0;
     tANI_U8         channelList[MAX_BSS_IN_NEIGHBOR_RPT];
-    tANI_U8             mergedOutputNumOfChannels = 0;
+    tANI_U8         mergedOutputNumOfChannels = 0;
 #if 0
     eHalStatus  status = eHAL_STATUS_SUCCESS;
 #endif
@@ -3197,8 +3251,9 @@ tANI_BOOLEAN csrNeighborRoamIsNewConnectedProfile(
         {
             fNew = FALSE;
         }
-        if (pIes) {
-            palFreeMemory(pMac->hHdd, pIes);
+        if (pIes)
+        {
+            vos_mem_free(pIes);
         }
     }
 
@@ -3411,6 +3466,10 @@ VOS_STATUS csrNeighborRoamTransitToCFGChanScan(tpAniSirGlobal pMac)
         else
         {
             numOfChannels = pMac->scan.occupiedChannels.numChannels;
+            if (numOfChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN)
+            {
+                numOfChannels = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+            }
             if (numOfChannels
 #ifdef FEATURE_WLAN_LFR
                 && ((pNeighborRoamInfo->uScanMode == SPLIT_SCAN_OCCUPIED_LIST) ||
@@ -3441,10 +3500,6 @@ VOS_STATUS csrNeighborRoamTransitToCFGChanScan(tpAniSirGlobal pMac)
                 }
                 else
                 {
-                    if (numOfChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN)
-                    {
-                        numOfChannels = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-                    }
                     vos_mem_copy(channelList,
                             pMac->scan.occupiedChannels.channelList,
                             numOfChannels * sizeof(tANI_U8));
@@ -3457,10 +3512,6 @@ VOS_STATUS csrNeighborRoamTransitToCFGChanScan(tpAniSirGlobal pMac)
                 {
                     smsLog(pMac, LOGE, FL("Memory allocation for Channel list failed"));
                     return VOS_STATUS_E_RESOURCES;
-                }
-                if (numOfChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN)
-                {
-                    numOfChannels = WNI_CFG_VALID_CHANNEL_LIST_LEN;
                 }
                 vos_mem_copy(currChannelListInfo->ChannelList,
                         channelList,
@@ -3837,9 +3888,15 @@ eHalStatus csrNeighborRoamIndicateDisconnect(tpAniSirGlobal pMac, tANI_U8 sessio
 #endif
     tCsrRoamSession *pSession = CSR_GET_SESSION( pMac, sessionId);
 
-    smsLog(pMac, LOGE, FL("Disconnect indication on session %d in state %d from BSSID : "
-                          MAC_ADDRESS_STR), sessionId, pNeighborRoamInfo->neighborRoamState,
-                          MAC_ADDR_ARRAY(pSession->connectedProfile.bssid));
+    if (NULL == pSession)
+    {
+        smsLog(pMac, LOGE, FL("pSession is NULL "));
+        return eHAL_STATUS_FAILURE;
+    }
+    VOS_TRACE(VOS_MODULE_ID_SME, VOS_TRACE_LEVEL_INFO,
+                   FL("Disconnect indication on session %d in state %d from BSSID : "
+                   MAC_ADDRESS_STR), sessionId, pNeighborRoamInfo->neighborRoamState,
+                   MAC_ADDR_ARRAY(pSession->connectedProfile.bssid));
  
 #ifdef FEATURE_WLAN_LFR
     /*Free the current previous profile and move the current profile to prev profile.*/
@@ -4271,7 +4328,7 @@ eHalStatus csrNeighborRoamInit(tpAniSirGlobal pMac)
     }
 
     /* Update the roam global structure from CFG */
-    palCopyMemory(pMac->hHdd, pNeighborRoamInfo->cfgParams.channelInfo.ChannelList,
+    vos_mem_copy(pNeighborRoamInfo->cfgParams.channelInfo.ChannelList,
                         pMac->roam.configParam.neighborRoamConfig.neighborScanChanList.channelList,
                         pMac->roam.configParam.neighborRoamConfig.neighborScanChanList.numChannels);
 
@@ -4281,8 +4338,7 @@ eHalStatus csrNeighborRoamInit(tpAniSirGlobal pMac)
     pNeighborRoamInfo->lookupDOWNRssi = 0;
     pNeighborRoamInfo->uEmptyScanCount = 0;
     pNeighborRoamInfo->uScanMode = DEFAULT_SCAN;
-    palZeroMemory(pMac->hHdd, &pNeighborRoamInfo->prevConnProfile,
-                  sizeof(tCsrRoamConnectedProfile));
+    vos_mem_set(&pNeighborRoamInfo->prevConnProfile, sizeof(tCsrRoamConnectedProfile), 0);
 #endif
     pNeighborRoamInfo->scanRspPending = eANI_BOOLEAN_FALSE;
 
@@ -4456,6 +4512,10 @@ void csrNeighborRoamRequestHandoff(tpAniSirGlobal pMac)
     tANI_U32 roamId = 0;
     eHalStatus status;
 
+#ifdef FEATURE_WLAN_LFR_METRICS
+    tCsrRoamInfo *roamInfoMetrics;
+#endif
+
     if (pMac->roam.neighborRoamInfo.neighborRoamState != eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE) 
     {
         smsLog(pMac, LOGE, FL("Roam requested when Neighbor roam is in %d state"),
@@ -4474,6 +4534,25 @@ void csrNeighborRoamRequestHandoff(tpAniSirGlobal pMac)
     VOS_TRACE (VOS_MODULE_ID_SME, VOS_TRACE_LEVEL_DEBUG,
                FL("HANDOFF CANDIDATE BSSID "MAC_ADDRESS_STR),
                                             MAC_ADDR_ARRAY(handoffNode.pBssDescription->bssId));
+
+#ifdef FEATURE_WLAN_LFR_METRICS
+    /* LFR metrics - pre-auth completion metric.
+       Send the event to supplicant that pre-auth successfully completed */
+    roamInfoMetrics = vos_mem_malloc(sizeof(tCsrRoamInfo));
+    if (NULL == roamInfoMetrics)
+    {
+        smsLog(pMac, LOG1, FL("Memory allocation failed!"));
+    }
+    else
+    {
+        vos_mem_copy((void *)roamInfoMetrics->bssid,
+            (void *)&handoffNode.pBssDescription->bssId, sizeof(tCsrBssid));
+        csrRoamCallCallback(pMac, pNeighborRoamInfo->csrSessionId,
+            roamInfoMetrics, 0, eCSR_ROAM_HANDOVER_SUCCESS, 0);
+        vos_mem_free(pRoamInfo);
+    }
+#endif
+
     /* Free the profile.. Just to make sure we dont leak memory here */ 
     csrReleaseProfile(pMac, &pNeighborRoamInfo->csrNeighborRoamProfile);
     /* Create the Handoff AP profile. Copy the currently connected profile and update only the BSSID and channel number
@@ -4745,16 +4824,22 @@ eHalStatus csrNeighborRoamProcessHandoffReq(tpAniSirGlobal pMac)
     tCsrRoamSession *pSession = CSR_GET_SESSION( pMac, pNeighborRoamInfo->csrSessionId );
     tANI_U8 i = 0;
 
+    if (NULL == pSession)
+    {
+        smsLog(pMac, LOGE, FL("pSession is NULL "));
+        return eHAL_STATUS_FAILURE;
+    }
+
     do
     {
         roamId = GET_NEXT_ROAM_ID(&pMac->roam);
-        status = palAllocateMemory(pMac->hHdd, (void **)&pProfile, sizeof(tCsrRoamProfile));
-        if(!HAL_STATUS_SUCCESS(status))
+        pProfile = vos_mem_malloc(sizeof(tCsrRoamProfile));
+        if ( NULL == pProfile )
         {
             smsLog(pMac, LOGE, FL("Memory alloc failed"));
-            break;
+            return eHAL_STATUS_FAILURE;
         }
-        palZeroMemory(pMac->hHdd, pProfile, sizeof(tCsrRoamProfile));
+        vos_mem_set(pProfile, sizeof(tCsrRoamProfile), 0);
         status = csrRoamCopyProfile(pMac, pProfile, pSession->pCurRoamProfile);
         if(!HAL_STATUS_SUCCESS(status))
         {
@@ -4783,7 +4868,7 @@ eHalStatus csrNeighborRoamProcessHandoffReq(tpAniSirGlobal pMac)
 
         pProfile->ChannelInfo.numOfChannels = 1;
         pProfile->ChannelInfo.ChannelList =
-            vos_mem_malloc(sizeof(*pProfile->ChannelInfo.ChannelList) *
+        vos_mem_malloc(sizeof(*pProfile->ChannelInfo.ChannelList) *
                            pProfile->ChannelInfo.numOfChannels);
         if (NULL == pProfile->ChannelInfo.ChannelList)
         {
@@ -4806,7 +4891,7 @@ eHalStatus csrNeighborRoamProcessHandoffReq(tpAniSirGlobal pMac)
     if(NULL != pProfile)
     {
         csrReleaseProfile(pMac, pProfile);
-        palFreeMemory(pMac->hHdd, pProfile);
+        vos_mem_free(pProfile);
     }
 
     return status;

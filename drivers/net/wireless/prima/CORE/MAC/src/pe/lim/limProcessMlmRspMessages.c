@@ -1,25 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
- */
-/*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -39,6 +19,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
+ */
 
 /*
  * This file limProcessMlmRspMessages.cc contains the code
@@ -421,6 +406,8 @@ limProcessMlmStartCnf(tpAniSirGlobal pMac, tANI_U32 *pMsgBuf)
         /// Start BSS is a failure
         peDeleteSession(pMac,psessionEntry);
         psessionEntry = NULL;
+        PELOGE(limLog(pMac, LOGE,FL("Start BSS Failed "));)
+        return;
     }
     /// Send response to Host
     limSendSmeStartBssRsp(pMac, eWNI_SME_START_BSS_RSP,
@@ -914,7 +901,7 @@ limProcessMlmReassocCnf(tpAniSirGlobal pMac, tANI_U32 *pMsgBuf)
         psessionEntry->pLimReAssocReq = NULL;
     }
 
-    PELOGE(limLog(pMac, LOGE, FL("Rcv MLM_REASSOC_CNF with result code %d"), pLimMlmReassocCnf->resultCode);)
+    PELOGE(limLog(pMac, LOG1, FL("Rcv MLM_REASSOC_CNF with result code %d"), pLimMlmReassocCnf->resultCode);)
     if (pLimMlmReassocCnf->resultCode == eSIR_SME_SUCCESS) {
         // Successful Reassociation
         PELOG1(limLog(pMac, LOG1, FL("*** Reassociated with new BSS ***"));)
@@ -2000,8 +1987,7 @@ void limProcessMlmDelBssRsp( tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,tpPESession 
         if ( eSIR_SUCCESS != limSendExcludeUnencryptInd(pMac, TRUE, psessionEntry) )
         {
             limLog( pMac, LOGE,
-                    FL( "Could not send down Exclude Unencrypted Indication!" ),
-                    psessionEntry->limMlmState );
+                    FL( "Could not send down Exclude Unencrypted Indication!" ) );
         }
     }
 #endif
@@ -3193,8 +3179,7 @@ void limProcessMlmAddBssRsp( tpAniSirGlobal pMac, tpSirMsgQ limMsgQ )
         if ( eSIR_SUCCESS != limSendExcludeUnencryptInd(pMac, FALSE, psessionEntry) )
         {
             limLog( pMac, LOGE,
-                    FL( "Could not send down Exclude Unencrypted Indication!" ),
-                    psessionEntry->limMlmState );
+                    FL( "Could not send down Exclude Unencrypted Indication!" ) );
         }
     }
 #endif
@@ -3521,6 +3506,7 @@ void limProcessInitScanRsp(tpAniSirGlobal pMac,  void *body)
                  */
                 pMac->lim.gLimNumOfConsecutiveBkgndScanFailure = 0;
                 pMac->lim.gLimNumOfBackgroundScanSuccess += 1;
+                pMac->lim.probeCounter = 0;
             }
             limContinueChannelScan(pMac);
             break;
@@ -3676,7 +3662,12 @@ static void limProcessSwitchChannelJoinReq(tpAniSirGlobal pMac, tpPESession pses
     {
         if (limSetLinkState(pMac, eSIR_LINK_BTAMP_PREASSOC_STATE, psessionEntry->bssId,
              psessionEntry->selfMacAddr, NULL, NULL) != eSIR_SUCCESS )
+        {
+            PELOGE(limLog(pMac, LOGE, FL("Sessionid: %d Set link state "
+            "failed!! BSSID:"MAC_ADDRESS_STR),psessionEntry->peSessionId,
+            MAC_ADDR_ARRAY(psessionEntry->bssId));)
             goto error;
+        }
     }
 
     /* Update the lim global gLimTriggerBackgroundScanDuringQuietBss */
@@ -3695,6 +3686,10 @@ static void limProcessSwitchChannelJoinReq(tpAniSirGlobal pMac, tpPESession pses
 
     //assign appropriate sessionId to the timer object
     pMac->lim.limTimers.gLimPeriodicJoinProbeReqTimer.sessionId = psessionEntry->peSessionId;
+    limLog(pMac, LOG1, FL("Sessionid: %d Send Probe req on channel %d ssid: %s "
+        "BSSID: "MAC_ADDRESS_STR), psessionEntry->peSessionId,
+         psessionEntry->currentOperChannel, ssId.ssId,
+         MAC_ADDR_ARRAY(psessionEntry->pLimMlmJoinReq->bssDescription.bssId));
     // include additional IE if there is
     limSendProbeReqMgmtFrame( pMac, &ssId,
            psessionEntry->pLimMlmJoinReq->bssDescription.bssId, psessionEntry->currentOperChannel/*chanNum*/,
@@ -3788,6 +3783,7 @@ void limProcessSwitchChannelRsp(tpAniSirGlobal pMac,  void *body)
     channelChangeReasonCode = psessionEntry->channelChangeReasonCode;
     // initialize it back to invalid id
     psessionEntry->channelChangeReasonCode = 0xBAD;
+    limLog(pMac, LOG1, FL("channelChangeReasonCode %d"),channelChangeReasonCode);
     switch(channelChangeReasonCode)
     {
         case LIM_SWITCH_CHANNEL_REASSOC:
@@ -4087,7 +4083,7 @@ void limProcessMlmHalAddBARsp( tpAniSirGlobal pMac,
     // Allocate for LIM_MLM_ADDBA_CNF
     pMlmAddBACnf = vos_mem_malloc(sizeof(tLimMlmAddBACnf));
     if ( NULL == pMlmAddBACnf ) {
-        limLog( pMac, LOGP, FL(" AllocateMemory failed with error code %d"));
+        limLog( pMac, LOGP, FL(" AllocateMemory failed for pMlmAddBACnf"));
         vos_mem_free(limMsgQ->bodyptr);
         limMsgQ->bodyptr = NULL;
         return;
@@ -4882,7 +4878,7 @@ void limProcessRxScanEvent(tpAniSirGlobal pMac, void *buf)
     tSirScanOffloadEvent *pScanEvent = (tSirScanOffloadEvent *) buf;
 
     VOS_TRACE(VOS_MODULE_ID_PE, VOS_TRACE_LEVEL_INFO,
-            "scan_id = %lu", pScanEvent->scanId);
+            "scan_id = %u", pScanEvent->scanId);
 
     switch (pScanEvent->event)
     {
@@ -4898,6 +4894,6 @@ void limProcessRxScanEvent(tpAniSirGlobal pMac, void *buf)
         case SCAN_EVENT_PREEMPTED:
         default:
             VOS_TRACE(VOS_MODULE_ID_PE, VOS_TRACE_LEVEL_DEBUG,
-                    "Received unhandled scan event %lu", pScanEvent->event);
+                    "Received unhandled scan event %u", pScanEvent->event);
     }
 }

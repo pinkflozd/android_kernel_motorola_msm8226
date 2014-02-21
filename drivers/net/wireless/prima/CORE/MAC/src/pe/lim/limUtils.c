@@ -1,25 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
- */
-/*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,7 +20,12 @@
  */
 
 /*
- * Airgo Networks, Inc proprietary. All rights reserved.
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
+ */
+
+/*
  * This file limUtils.cc contains the utility functions
  * LIM uses.
  * Author:        Chandra Modumudi
@@ -78,16 +63,29 @@ static tAniBool glimTriggerBackgroundScanDuringQuietBss_Status = eSIR_TRUE;
 
 /* 11A Channel list to decode RX BD channel information */
 static const tANI_U8 abChannel[]= {36,40,44,48,52,56,60,64,100,104,108,112,116,
-            120,124,128,132,136,140,149,153,157,161,165};
+            120,124,128,132,136,140,149,153,157,161,165
+#ifdef FEATURE_WLAN_CH144
+                ,144
+#endif
+};
+#define abChannelSize (sizeof(abChannelList)/  \
+        sizeof(abChannelList[0]))
 
 #ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
 static const tANI_U8 aUnsortedChannelList[]= {52,56,60,64,100,104,108,112,116,
-            120,124,128,132,136,140,36,40,44,48,149,153,157,161,165};
+            120,124,128,132,136,140,36,40,44,48,149,153,157,161,165
+#ifdef FEATURE_WLAN_CH144
+                ,144
+#endif
+};
+#define aUnsortedChannelListSize (sizeof(aUnsortedChannelList)/  \
+        sizeof(aUnsortedChannelList[0]))
 #endif
 
 //#define LIM_MAX_ACTIVE_SESSIONS 3  //defined temporarily for BT-AMP SUPPORT 
 #define SUCCESS 1                   //defined temporarily for BT-AMP
 
+#define MAX_BA_WINDOW_SIZE_FOR_CISCO 25
 /** -------------------------------------------------------------
 \fn limAssignDialogueToken
 \brief Assigns dialogue token.
@@ -1277,10 +1275,6 @@ limPrintMacAddr(tpAniSirGlobal pMac, tSirMacAddr macAddr, tANI_U8 logLevel)
     limLog(pMac, logLevel,
            FL(MAC_ADDRESS_STR), MAC_ADDR_ARRAY(macAddr));
 } /****** end limPrintMacAddr() ******/
-
-
-
-
 
 
 /*
@@ -5097,7 +5091,6 @@ void limTxComplete( tHalHandle hHal, void *pData )
         if(VOS_IS_STATUS_SUCCESS(vosStatus))
         {
             mHdr = WDA_GET_RX_MAC_HEADER(pRxBd);
-            MTRACE(macTrace(pMac, TRACE_CODE_TX_COMPLETE, NO_SESSION, mHdr->fc.subType);)
 
         }   
     }
@@ -5913,7 +5906,17 @@ tSirRetStatus limPostMlmAddBAReq( tpAniSirGlobal pMac,
   // Requesting the ADDBA recipient to populate the size.
   // If ADDBA is accepted, a non-zero buffer size should
   // be returned in the ADDBA Rsp
-  pMlmAddBAReq->baBufferSize = 0;
+  if ((TRUE == psessionEntry->isCiscoVendorAP) &&
+        (eHT_CHANNEL_WIDTH_80MHZ != pStaDs->htSupportedChannelWidthSet))
+  {
+      /* Cisco AP has issues in receiving more than 25 "mpdu in ampdu"
+          causing very low throughput in HT40 case */
+      limLog( pMac, LOGW,
+          FL( "Requesting ADDBA with Cisco 1225 AP, window size 25"));
+      pMlmAddBAReq->baBufferSize = MAX_BA_WINDOW_SIZE_FOR_CISCO;
+  }
+  else
+      pMlmAddBAReq->baBufferSize = 0;
 
   limLog( pMac, LOGW,
       FL( "Requesting an ADDBA to setup a %s BA session with STA %d for TID %d" ),
@@ -7424,11 +7427,13 @@ void limProcessDelStaSelfRsp(tpAniSirGlobal pMac,tpSirMsgQ limMsgQ)
 *****************************************************************/
 tANI_U8 limUnmapChannel(tANI_U8 mapChannel)
 {
-   if( mapChannel > 0 && mapChannel < 25 )
 #ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
+   if( mapChannel > 0 && mapChannel < aUnsortedChannelListSize )
        if (IS_ROAM_SCAN_OFFLOAD_FEATURE_ENABLE)
            return aUnsortedChannelList[mapChannel -1];
        else
+#else
+   if( mapChannel > 0 && mapChannel < abChannelSize )
 #endif
      return abChannel[mapChannel -1];
    else
@@ -7693,6 +7698,59 @@ tANI_BOOLEAN limIsconnectedOnDFSChannel(tANI_U8 currentChannel)
     }
 }
 
+/**
+ * \brief verify the changes in channel bonding
+ *
+ * \param pMac Pointer to the global MAC structure
+ *
+ * \param psessionEntry session entry
+ *           beaconSecChanWidth    Secondary channel width
+ *                                             advertized in beacon
+ *          currentSecChanWidth     Current configured width
+ *          staId                            Station Id
+ * \return eSIR_SUCCESS on success, eSIR_FAILURE else
+ */
+tANI_BOOLEAN limCheckHTChanBondModeChange(tpAniSirGlobal pMac,
+                                                  tpPESession psessionEntry,
+                                                  tANI_U8 beaconSecChanWidth,
+                                                  tANI_U8 currentSecChanWidth,
+                                                  tANI_U8 staId)
+{
+    tUpdateVHTOpMode tempParam;
+    tANI_BOOLEAN fCbMode24G = FALSE;
+    tANI_BOOLEAN status = eANI_BOOLEAN_FALSE;
+
+     /* Moving from HT40 to HT20 operation*/
+    if (((PHY_DOUBLE_CHANNEL_LOW_PRIMARY == currentSecChanWidth) ||
+      (PHY_DOUBLE_CHANNEL_HIGH_PRIMARY == currentSecChanWidth))
+      && (PHY_SINGLE_CHANNEL_CENTERED == beaconSecChanWidth))
+    {
+       tempParam.opMode = eHT_CHANNEL_WIDTH_20MHZ;
+       tempParam.staId  = staId;
+       fCbMode24G = TRUE;
+    }
+
+     /* Moving from HT20 to HT40 operation*/
+    if ((( PHY_DOUBLE_CHANNEL_LOW_PRIMARY == beaconSecChanWidth) ||
+      ( PHY_DOUBLE_CHANNEL_HIGH_PRIMARY == beaconSecChanWidth ))
+      && (PHY_SINGLE_CHANNEL_CENTERED == currentSecChanWidth))
+    {
+       tempParam.opMode = eHT_CHANNEL_WIDTH_40MHZ;
+       tempParam.staId  = staId;
+       fCbMode24G = TRUE;
+    }
+
+    if (TRUE == fCbMode24G)
+    {
+       VOS_TRACE( VOS_MODULE_ID_PE, VOS_TRACE_LEVEL_INFO,
+                 "Changing CBMODE to = %d staId = %d",
+                  tempParam.opMode, tempParam.staId );
+       if( eSIR_SUCCESS == limSendModeUpdate(pMac, &tempParam, psessionEntry))
+          status = eANI_BOOLEAN_TRUE;
+    }
+    return status;
+}
+
 #ifdef WLAN_FEATURE_11AC
 tANI_BOOLEAN limCheckVHTOpModeChange( tpAniSirGlobal pMac, tpPESession psessionEntry, tANI_U8 chanWidth, tANI_U8 staId)
 {
@@ -7720,6 +7778,7 @@ tANI_U8 limGetShortSlotFromPhyMode(tpAniSirGlobal pMac, tpPESession psessionEntr
     else if (phyMode == WNI_CFG_PHY_MODE_11G)
     {
         if ((psessionEntry->pePersona == VOS_STA_SAP_MODE) ||
+            (psessionEntry->pePersona == VOS_IBSS_MODE) ||
             (psessionEntry->pePersona == VOS_P2P_GO_MODE))
         {
             val = true;
@@ -7741,4 +7800,74 @@ tANI_U8 limGetShortSlotFromPhyMode(tpAniSirGlobal pMac, tpPESession psessionEntr
     }
     limLog(pMac, LOG1, FL("phyMode = %u shortslotsupported = %u"), phyMode, val);
     return val;
+}
+
+/**--------------------------------------------
+\fn       limUpdateOBSSScanParams
+\brief    Updates OBSS SCAN IE parameters to session
+
+\param psessionEntry  - Session Entry
+\return NONE
+---------------------------------------------*/
+void limUpdateOBSSScanParams(tpPESession psessionEntry ,
+             tDot11fIEOBSSScanParameters *pOBSSScanParameters)
+{
+    /*If the recieved value is not in the range specified by the Specification
+    then it will be the default value configured through cfg */
+    if (( pOBSSScanParameters->obssScanActiveDwell >
+       WNI_CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_STAMIN ) &&
+       ( pOBSSScanParameters->obssScanActiveDwell <
+        WNI_CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_STAMAX))
+    {
+        psessionEntry->obssHT40ScanParam.OBSSScanActiveDwellTime=
+              pOBSSScanParameters->obssScanActiveDwell;
+    }
+    if((pOBSSScanParameters->obssScanPassiveDwell >
+          WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_STAMIN ) &&
+        (pOBSSScanParameters->obssScanPassiveDwell <
+           WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_STAMAX))
+    {
+        psessionEntry->obssHT40ScanParam.OBSSScanPassiveDwellTime =
+              pOBSSScanParameters->obssScanPassiveDwell;
+    }
+    if((pOBSSScanParameters->bssWidthChannelTransitionDelayFactor >
+         WNI_CFG_OBSS_HT40_WIDTH_CHANNEL_TRANSITION_DELAY_FACTOR_STAMIN) &&
+       (pOBSSScanParameters->bssWidthChannelTransitionDelayFactor <
+        WNI_CFG_OBSS_HT40_WIDTH_CHANNEL_TRANSITION_DELAY_FACTOR_STAMAX))
+    {
+        psessionEntry->obssHT40ScanParam.BSSWidthChannelTransitionDelayFactor =
+              pOBSSScanParameters->bssWidthChannelTransitionDelayFactor;
+    }
+    if((pOBSSScanParameters->obssScanActiveTotalPerChannel >
+            WNI_CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL_STAMIN) &&
+       (pOBSSScanParameters->obssScanActiveTotalPerChannel <
+           WNI_CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL_STAMAX))
+    {
+        psessionEntry->obssHT40ScanParam.OBSSScanActiveTotalPerChannel =
+             pOBSSScanParameters->obssScanActiveTotalPerChannel;
+    }
+    if((pOBSSScanParameters->obssScanPassiveTotalPerChannel >
+            WNI_CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL_STAMIN) &&
+       (pOBSSScanParameters->obssScanPassiveTotalPerChannel <
+           WNI_CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL_STAMAX))
+    {
+        psessionEntry->obssHT40ScanParam.OBSSScanPassiveTotalPerChannel =
+             pOBSSScanParameters->obssScanPassiveTotalPerChannel;
+    }
+    if((pOBSSScanParameters->bssChannelWidthTriggerScanInterval >
+           WNI_CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_STAMIN) &&
+       (pOBSSScanParameters->bssChannelWidthTriggerScanInterval <
+        WNI_CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_STAMAX))
+    {
+         psessionEntry->obssHT40ScanParam.BSSChannelWidthTriggerScanInterval =
+              pOBSSScanParameters->bssChannelWidthTriggerScanInterval;
+    }
+    if((pOBSSScanParameters->obssScanActivityThreshold >
+       WNI_CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD_STAMIN )&&
+       (pOBSSScanParameters->obssScanActivityThreshold <
+        WNI_CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD_STAMAX))
+    {
+       psessionEntry->obssHT40ScanParam.OBSSScanActivityThreshold =
+              pOBSSScanParameters->obssScanActivityThreshold;
+    }
 }

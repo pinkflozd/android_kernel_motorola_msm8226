@@ -1,25 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
- */
-/*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -39,6 +19,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
+ */
 
 /**=========================================================================
   
@@ -2827,7 +2812,7 @@ sme_QosStatusType sme_QosSetup(tpAniSirGlobal pMac,
    }
 
    VOS_TRACE(VOS_MODULE_ID_SME, VOS_TRACE_LEVEL_DEBUG,
-             "%s: UAPSD/PSB set %d: ", __func__, __LINE__,
+             "%s: %d: UAPSD/PSB set %d: ", __func__, __LINE__,
              pTspec_Info->ts_info.psb);
 
    pACInfo = &pSession->ac_info[ac];
@@ -3796,6 +3781,7 @@ eHalStatus sme_QosAddTsReq(tpAniSirGlobal pMac,
                 __func__, __LINE__, sessionId);
       return eHAL_STATUS_FAILURE;
    }
+
    pSession = &sme_QosCb.sessionInfo[sessionId];
    pMsg = (tSirAddtsReq *)vos_mem_malloc(sizeof(tSirAddtsReq));
    if (!pMsg)
@@ -6099,7 +6085,7 @@ static eHalStatus sme_QosBufferExistingFlows(tpAniSirGlobal pMac,
    pEntry = csrLLPeekHead( &sme_QosCb.flow_list, VOS_FALSE );
    if(!pEntry)
    {
-      VOS_TRACE(VOS_MODULE_ID_SME, VOS_TRACE_LEVEL_ERROR, 
+      VOS_TRACE(VOS_MODULE_ID_SME, VOS_TRACE_LEVEL_INFO_HIGH,
                 "%s: %d: Flow List empty, nothing to buffer",
                 __func__, __LINE__);
       return eHAL_STATUS_FAILURE;
@@ -7166,6 +7152,30 @@ static v_BOOL_t sme_QosIsRspPending(v_U8_t sessionId, sme_QosEdcaAcType ac)
    }
    return status;
 }
+
+/*--------------------------------------------------------------------------
+  \brief sme_QosUpdateHandOff() - Function which can be called to update
+   Hand-off state of SME QoS Session
+  \param sessionId - session id
+  \param updateHandOff - value True/False to update the handoff flag
+
+  \sa
+
+-------------------------------------------------------------------------*/
+void sme_QosUpdateHandOff(v_U8_t sessionId,
+                          v_BOOL_t updateHandOff)
+{
+   sme_QosSessionInfo *pSession;
+   pSession = &sme_QosCb.sessionInfo[sessionId];
+   VOS_TRACE(VOS_MODULE_ID_SME, VOS_TRACE_LEVEL_INFO_MED,
+             "%s: %d: handoffRequested %d updateHandOff %d",
+             __func__, __LINE__,pSession->handoffRequested,
+             updateHandOff);
+
+   pSession->handoffRequested = updateHandOff;
+
+}
+
 /*--------------------------------------------------------------------------
   \brief sme_QosIsUapsdActive() - Function which can be called to determine
   if any sessions require PMC to be in U-APSD mode.

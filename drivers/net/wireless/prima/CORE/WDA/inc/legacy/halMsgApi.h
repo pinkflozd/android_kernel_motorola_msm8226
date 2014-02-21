@@ -1,25 +1,5 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
- */
-/*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,7 +20,12 @@
  */
 
 /*
- * */
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
+ */
+
+
 #ifndef _HALMSGAPI_H_
 #define _HALMSGAPI_H_
 
@@ -873,13 +858,11 @@ typedef struct
     tANI_U16 paramChangeBitmap;
 }tUpdateBeaconParams, *tpUpdateBeaconParams;
 
-#ifdef WLAN_FEATURE_11AC
 typedef struct 
 {
    tANI_U16   opMode;
    tANI_U16  staId;
 }tUpdateVHTOpMode, *tpUpdateVHTOpMode;
-#endif
 
 //HAL MSG: SIR_HAL_UPDATE_CF_IND
 typedef struct
@@ -1302,12 +1285,23 @@ typedef struct sMaxTxPowerParams
     tPowerdBm  power;
 }tMaxTxPowerParams, *tpMaxTxPowerParams;
 
+typedef struct sMaxTxPowerPerBandParams
+{
+    eCsrBand   bandInfo;
+    tPowerdBm  power;
+}tMaxTxPowerPerBandParams, *tpMaxTxPowerPerBandParams;
+
 typedef struct sAddStaSelfParams
 {
    tSirMacAddr selfMacAddr;
    tVOS_CON_MODE currDeviceMode;
    tANI_U32 status;
 }tAddStaSelfParams, *tpAddStaSelfParams;
+
+typedef struct sAbortScanParams
+{
+   tANI_U8 SessionId;
+}tAbortScanParams, *tpAbortScanParams;
 
 typedef struct sDelStaSelfParams
 {
@@ -1327,6 +1321,9 @@ typedef struct sP2pPsParams
    tANI_U8   psSelection;
 }tP2pPsParams, *tpP2pPsParams;
 
+#define HAL_MAX_SUPP_CHANNELS 128
+#define HAL_MAX_SUPP_OPER_CLASSES 32
+
 typedef struct sTdlsLinkEstablishParams
 {
    tANI_U16  staIdx;
@@ -1334,6 +1331,13 @@ typedef struct sTdlsLinkEstablishParams
    tANI_U8   uapsdQueues;
    tANI_U8   maxSp;
    tANI_U8   isBufsta;
+   tANI_U8   isOffChannelSupported;
+   tANI_U8   peerCurrOperClass;
+   tANI_U8   selfCurrOperClass;
+   tANI_U8   validChannelsLen;
+   tANI_U8   validChannels[HAL_MAX_SUPP_CHANNELS];
+   tANI_U8   validOperClassesLen;
+   tANI_U8   validOperClasses[HAL_MAX_SUPP_OPER_CLASSES];
    tANI_U32  status;
 }tTdlsLinkEstablishParams, *tpTdlsLinkEstablishParams;
 
