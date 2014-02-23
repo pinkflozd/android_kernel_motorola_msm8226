@@ -1,5 +1,25 @@
 /*
- * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ *
+ * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
+ *
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -20,14 +40,7 @@
  */
 
 /*
- * Copyright (c) 2012-2013 Qualcomm Atheros, Inc.
- * All Rights Reserved.
- * Qualcomm Atheros Confidential and Proprietary.
- *
- */
-
-
-/*
+ * Airgo Networks, Inc proprietary. All rights reserved.
  * This file limApi.cc contains the functions that are
  * exported by LIM to other modules.
  *
@@ -342,8 +355,6 @@ static void __limInitVars(tpAniSirGlobal pMac)
 
     //Scan in Power Save Flag
     pMac->lim.gScanInPowersave = 0;
-    pMac->lim.probeCounter = 0;
-    pMac->lim.maxProbe = 0;
 }
 
 static void __limInitAssocVars(tpAniSirGlobal pMac)
@@ -572,7 +583,7 @@ static tSirRetStatus __limInitConfig( tpAniSirGlobal pMac )
       limHandleCFGparamUpdate do we want to update this? */
    if(wlan_cfgGetInt(pMac, WNI_CFG_SHORT_PREAMBLE, &val1) != eSIR_SUCCESS)
    {
-      limLog(pMac, LOGE, FL("cfg get short preamble failed"));
+      limLog(pMac, LOGP, FL("cfg get short preamble failed"));
       return eSIR_FAILURE;
    }
 
@@ -623,11 +634,6 @@ static tSirRetStatus __limInitConfig( tpAniSirGlobal pMac )
        return eSIR_FAILURE;
    }
    if(wlan_cfgGetInt(pMac, WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK,(tANI_U32 *) &pMac->lim.gLimTDLSUapsdMask) != eSIR_SUCCESS)
-   {
-       limLog(pMac, LOGP, FL("cfg get LimTDLSUapsdMask failed"));
-       return eSIR_FAILURE;
-   }
-   if(wlan_cfgGetInt(pMac, WNI_CFG_TDLS_OFF_CHANNEL_ENABLED,(tANI_U32 *) &pMac->lim.gLimTDLSOffChannelEnabled) != eSIR_SUCCESS)
    {
        limLog(pMac, LOGP, FL("cfg get LimTDLSUapsdMask failed"));
        return eSIR_FAILURE;
@@ -769,6 +775,7 @@ limInitialize(tpAniSirGlobal pMac)
     
     vos_trace_setLevel(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR);
 #endif
+    MTRACE(limTraceInit(pMac));
 
     //Initialize the configurations needed by PE
     if( eSIR_FAILURE == __limInitConfig(pMac))
@@ -1031,24 +1038,9 @@ tSirRetStatus peOpen(tpAniSirGlobal pMac, tMacOpenParameters *pMacOpenParam)
     if( !VOS_IS_STATUS_SUCCESS( vos_lock_init( &pMac->lim.lkPeGlobalLock ) ) )
     {
         PELOGE(limLog(pMac, LOGE, FL("pe lock init failed!"));)
-        vos_mem_free(pMac->lim.limTimers.gpLimCnfWaitTimer);
-        pMac->lim.limTimers.gpLimCnfWaitTimer = NULL;
-        vos_mem_free(pMac->lim.gpSession);
-        pMac->lim.gpSession = NULL;
-        vos_mem_free(pMac->pmm.gPmmTim.pTim);
-        pMac->pmm.gPmmTim.pTim = NULL;
         return eSIR_FAILURE;
     }
     pMac->lim.deauthMsgCnt = 0;
-
-    /*
-     * peOpen is successful by now, so it is right time to initialize
-     * MTRACE for PE module. if LIM_TRACE_RECORD is not defined in build file
-     * then nothing will be logged for PE module.
-     */
-#ifdef LIM_TRACE_RECORD
-    MTRACE(limTraceInit(pMac));
-#endif
     return eSIR_SUCCESS;
 }
 
@@ -1644,7 +1636,7 @@ limUpdateOverlapStaParam(tpAniSirGlobal pMac, tSirMacAddr bssId, tpLimProtStaPar
 
     if (i == LIM_PROT_STA_OVERLAP_CACHE_SIZE)
     {
-        PELOG1(limLog(pMac, LOGW, FL("Overlap cache is full"));)
+        PELOG1(limLog(pMac, LOG1, FL("Overlap cache is full"));)
     }
     else
     {
@@ -1688,9 +1680,7 @@ limHandleIBSScoalescing(
     tSirRetStatus   retCode;
 
     pHdr = WDA_GET_RX_MAC_HEADER(pRxPacketInfo);
-    if ( (!pBeacon->capabilityInfo.ibss) ||
-         (limCmpSSid(pMac, &pBeacon->ssId,psessionEntry) != true) ||
-         (psessionEntry->currentOperChannel != pBeacon->channelNumber) )
+    if ( (!pBeacon->capabilityInfo.ibss) || (limCmpSSid(pMac, &pBeacon->ssId,psessionEntry) != true) )
         /* Received SSID does not match => Ignore received Beacon frame. */
         retCode =  eSIR_LIM_IGNORE_BEACON;
     else

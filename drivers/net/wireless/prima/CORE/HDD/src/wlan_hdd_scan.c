@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,11 +18,25 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
 /*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
+ * Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ *
+ * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
+ *
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**========================================================================
@@ -124,7 +138,6 @@ static eHalStatus hdd_AddIwStreamEvent(int cmd, int length, char* data, hdd_scan
     if(*last_event == *current_event)
     {
             /* no space to add event */
-        hddLog( LOGW, "%s: no space left to add event", __func__);
         return -E2BIG; /* Error code, may be E2BIG */
     }
 
@@ -294,7 +307,6 @@ static eHalStatus hdd_IndicateScanResult(hdd_scan_info_t *scanInfo, tCsrScanResu
 
    if (last_event == current_event)
    { /* no space to add event */
-       hddLog( LOGW, "hdd_IndicateScanResult: no space for SIOCGIWFREQ");
        return -E2BIG;
    }
 
@@ -475,7 +487,6 @@ static eHalStatus hdd_IndicateScanResult(hdd_scan_info_t *scanInfo, tCsrScanResu
       if(last_event == current_event)
       { /* no space to add event
                Error code, may be E2BIG */
-          hddLog( LOGW, "hdd_IndicateScanResult: no space for SIOCGIWENCODE");
           return -E2BIG;
       }
    }
@@ -724,20 +735,10 @@ int iw_set_scan(struct net_device *dev, struct iw_request_info *info,
        memcpy( pHddCtx->scan_info.scanAddIE.addIEdata, pwextBuf->genIE.addIEdata, 
            pwextBuf->genIE.length );
        pHddCtx->scan_info.scanAddIE.length = pwextBuf->genIE.length;
-      /* Maximum length of each IE is SIR_MAC_MAX_IE_LENGTH */
-       if (SIR_MAC_MAX_IE_LENGTH  >=  pwextBuf->genIE.length)
-       {
-           memcpy( pwextBuf->roamProfile.addIEScan,
-                       pHddCtx->scan_info.scanAddIE.addIEdata,
-                       pHddCtx->scan_info.scanAddIE.length);
-           pwextBuf->roamProfile.nAddIEScanLength =
-                                pHddCtx->scan_info.scanAddIE.length;
-       }
-       else
-       {
-           VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
-                     "Invalid ScanIE, Length is %d", pwextBuf->genIE.length);
-       }
+
+       pwextBuf->roamProfile.pAddIEScan = pHddCtx->scan_info.scanAddIE.addIEdata;
+       pwextBuf->roamProfile.nAddIEScanLength = pHddCtx->scan_info.scanAddIE.length;
+   
        /* clear previous genIE after use it */
        memset( &pwextBuf->genIE, 0, sizeof(pwextBuf->genIE) );
    }
@@ -1022,7 +1023,7 @@ int iw_set_cscan(struct net_device *dev, struct iw_request_info *info,
                 /* get the ssid length */
                 SsidInfo->SSID.length = str_ptr[ssid_start++];
                 vos_mem_copy(SsidInfo->SSID.ssId, &str_ptr[ssid_start], SsidInfo->SSID.length);
-                hddLog(VOS_TRACE_LEVEL_INFO_HIGH, "SSID number %d:  %s", j, SsidInfo->SSID.ssId);
+                hddLog(VOS_TRACE_LEVEL_INFO_HIGH, "SSID number %d:  %s\n", j, SsidInfo->SSID.ssId);
              }
                 /* skipping length */
              ssid_start += str_ptr[ssid_start - 1] + 1;
@@ -1049,7 +1050,7 @@ int iw_set_cscan(struct net_device *dev, struct iw_request_info *info,
                 scanRequest.ChannelInfo.ChannelList = vos_mem_malloc(scanRequest.ChannelInfo.numOfChannels * sizeof(v_U8_t));
                 if(NULL == scanRequest.ChannelInfo.ChannelList) 
                 {
-                    hddLog(LOGE, "memory alloc failed for channel list creation");
+                    hddLog(VOS_TRACE_LEVEL_INFO_HIGH, "memory alloc failed for channel list creation");
                     status = -ENOMEM;
                     goto exit_point;
                 }
@@ -1114,20 +1115,9 @@ int iw_set_cscan(struct net_device *dev, struct iw_request_info *info,
             memcpy( pHddCtx->scan_info.scanAddIE.addIEdata, pwextBuf->genIE.addIEdata, 
                 pwextBuf->genIE.length );
             pHddCtx->scan_info.scanAddIE.length = pwextBuf->genIE.length;
-            if (SIR_MAC_MAX_IE_LENGTH  >=  pwextBuf->genIE.length)
-            {
-                memcpy( pwextBuf->roamProfile.addIEScan,
-                           pHddCtx->scan_info.scanAddIE.addIEdata,
-                           pHddCtx->scan_info.scanAddIE.length);
-                pwextBuf->roamProfile.nAddIEScanLength =
-                                  pHddCtx->scan_info.scanAddIE.length;
-            }
-            else
-            {
-                VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
-                         "Invalid ScanIE, Length is %d",
-                          pwextBuf->genIE.length);
-            }
+
+            pwextBuf->roamProfile.pAddIEScan = pHddCtx->scan_info.scanAddIE.addIEdata;
+            pwextBuf->roamProfile.nAddIEScanLength = pHddCtx->scan_info.scanAddIE.length;
 
             /* clear previous genIE after use it */
             memset( &pwextBuf->genIE, 0, sizeof(pwextBuf->genIE) );
@@ -1177,9 +1167,8 @@ exit_point:
 }
 
 /* Abort any MAC scan if in progress */
-void hdd_abort_mac_scan(hdd_context_t* pHddCtx, tANI_U8 sessionId,
-                        eCsrAbortReason reason)
+void hdd_abort_mac_scan(hdd_context_t* pHddCtx)
 {
-    sme_AbortMacScan(pHddCtx->hHal, sessionId, reason);
+    sme_AbortMacScan(pHddCtx->hHal);
 }
 

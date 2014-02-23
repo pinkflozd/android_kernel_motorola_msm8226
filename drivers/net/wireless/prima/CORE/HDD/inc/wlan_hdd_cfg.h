@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -18,11 +18,25 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
 /*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
+ * Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ *
+ * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
+ *
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 #if !defined( HDD_CONFIG_H__ )
@@ -51,7 +65,7 @@
 #include <csrApi.h>
 
 //Number of items that can be configured
-#define MAX_CFG_INI_ITEMS   512
+#define MAX_CFG_INI_ITEMS   400
 
 // Defines for all of the things we read from the configuration (registry).
 
@@ -268,6 +282,12 @@
 #define CFG_ENABLE_ADAPT_RX_DRAIN_MAX       WNI_CFG_ENABLE_ADAPT_RX_DRAIN_STAMAX
 #define CFG_ENABLE_ADAPT_RX_DRAIN_DEFAULT   WNI_CFG_ENABLE_ADAPT_RX_DRAIN_STADEF
 
+//Enable Prop IE
+#define CFG_ENABLE_OXYNWK_NAME                   "gEnableOxygenNwk"
+#define CFG_ENABLE_OXYNWK_MIN                    ( 0 )
+#define CFG_ENABLE_OXYNWK_MAX                    ( 1 )
+#define CFG_ENABLE_OXYNWK_DEFAULT                ( 0 )
+
 typedef enum
 {
     eHDD_DOT11_MODE_AUTO = 0, //covers all things we support
@@ -438,7 +458,7 @@ typedef enum
 #define CFG_AP_OBSS_PROTECTION_MODE_NAME       "gEnableApOBSSProt" 
 #define CFG_AP_OBSS_PROTECTION_MODE_MIN        ( 0 )
 #define CFG_AP_OBSS_PROTECTION_MODE_MAX        ( 1 ) 
-#define CFG_AP_OBSS_PROTECTION_MODE_DEFAULT    ( 0 )   
+#define CFG_AP_OBSS_PROTECTION_MODE_DEFAULT    ( 1 )
 
 #define CFG_AP_STA_SECURITY_SEPERATION_NAME    "gDisableIntraBssFwd"
 #define CFG_AP_STA_SECURITY_SEPERATION_MIN     ( 0 )
@@ -486,28 +506,19 @@ typedef enum
 #define CFG_ENABLE_LTE_COEX_DEFAULT           ( 0 )
 
 #define CFG_AP_KEEP_ALIVE_PERIOD_NAME          "gApKeepAlivePeriod"
-#define CFG_AP_KEEP_ALIVE_PERIOD_MIN           ( 3 )
-#define CFG_AP_KEEP_ALIVE_PERIOD_MAX           ( 20 )
-#define CFG_AP_KEEP_ALIVE_PERIOD_DEFAULT       ( 5 )
+#define CFG_AP_KEEP_ALIVE_PERIOD_MIN           ( 0 )
+#define CFG_AP_KEEP_ALIVE_PERIOD_MAX           ( 255)
+#define CFG_AP_KEEP_ALIVE_PERIOD_DEFAULT       ( 20 )
 
 #define CFG_GO_KEEP_ALIVE_PERIOD_NAME          "gGoKeepAlivePeriod"
-#define CFG_GO_KEEP_ALIVE_PERIOD_MIN           ( 3 )
-#define CFG_GO_KEEP_ALIVE_PERIOD_MAX           ( 20 )
-#define CFG_GO_KEEP_ALIVE_PERIOD_DEFAULT       ( 5 )
+#define CFG_GO_KEEP_ALIVE_PERIOD_MIN           ( 0 )
+#define CFG_GO_KEEP_ALIVE_PERIOD_MAX           ( 255)
+#define CFG_GO_KEEP_ALIVE_PERIOD_DEFAULT       ( 20 )
 
 #define CFG_AP_LINK_MONITOR_PERIOD_NAME          "gApLinkMonitorPeriod"
-#define CFG_AP_LINK_MONITOR_PERIOD_MIN           ( 3 )
-#define CFG_AP_LINK_MONITOR_PERIOD_MAX           ( 50 )
-#define CFG_AP_LINK_MONITOR_PERIOD_DEFAULT       ( 10 )
-
-/* gGoLinkMonitorPeriod is period where link is idle and where
- * we send NULL frame
- */
-#define CFG_GO_LINK_MONITOR_PERIOD_NAME          "gGoLinkMonitorPeriod"
-#define CFG_GO_LINK_MONITOR_PERIOD_MIN           ( 3 )
-#define CFG_GO_LINK_MONITOR_PERIOD_MAX           ( 50 )
-#define CFG_GO_LINK_MONITOR_PERIOD_DEFAULT       ( 10 )
-
+#define CFG_AP_LINK_MONITOR_PERIOD_MIN           ( 0 )
+#define CFG_AP_LINK_MONITOR_PERIOD_MAX           ( 255)
+#define CFG_AP_LINK_MONITOR_PERIOD_DEFAULT       ( 3 )
 
 #define CFG_BEACON_INTERVAL_NAME               "gBeaconInterval"
 #define CFG_BEACON_INTERVAL_MIN                WNI_CFG_BEACON_INTERVAL_STAMIN
@@ -982,26 +993,6 @@ typedef enum
 #define CFG_TL_DELAYED_TRGR_FRM_INT_MAX                     (4294967295UL)
 #define CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT                 3000
 
-#define CFG_REORDER_TIME_BK_NAME                           "BkReorderTime"
-#define CFG_REORDER_TIME_BK_MIN                            30
-#define CFG_REORDER_TIME_BK_MAX                            1000
-#define CFG_REORDER_TIME_BK_DEFAULT                        300
-
-#define CFG_REORDER_TIME_BE_NAME                           "BeReorderTime"
-#define CFG_REORDER_TIME_BE_MIN                            30
-#define CFG_REORDER_TIME_BE_MAX                            1000
-#define CFG_REORDER_TIME_BE_DEFAULT                        300
-
-#define CFG_REORDER_TIME_VI_NAME                           "ViReorderTime"
-#define CFG_REORDER_TIME_VI_MIN                            30
-#define CFG_REORDER_TIME_VI_MAX                            1000
-#define CFG_REORDER_TIME_VI_DEFAULT                        300
-
-#define CFG_REORDER_TIME_VO_NAME                           "VoReorderTime"
-#define CFG_REORDER_TIME_VO_MIN                            30
-#define CFG_REORDER_TIME_VO_MAX                            1000
-#define CFG_REORDER_TIME_VO_DEFAULT                        40
-
 #if defined WLAN_FEATURE_VOWIFI
 #define CFG_RRM_ENABLE_NAME                              "gRrmEnable"
 #define CFG_RRM_ENABLE_MIN                               (0)
@@ -1231,11 +1222,9 @@ typedef enum
 #define CFG_NEIGHBOR_REASSOC_RSSI_THRESHOLD_DEFAULT           (83)
 
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_NAME      "gNeighborLookupThreshold"
-#define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN       (0)
+#define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN       (10)
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX       (120)
-#define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_DEFAULT   (0) /*A Zero value indicates the host to calculate
-                                                           Adaptive thresold based on the minimum
-                                                           supported data rate.*/
+#define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_DEFAULT   (78)
 
 #define CFG_NEIGHBOR_SCAN_CHAN_LIST_NAME                      "gNeighborScanChannelList"
 #define CFG_NEIGHBOR_SCAN_CHAN_LIST_DEFAULT                   ""
@@ -1358,7 +1347,7 @@ typedef enum
 #define CFG_ENABLE_BYPASS_11D_NAME                 "gEnableBypass11d"
 #define CFG_ENABLE_BYPASS_11D_MIN                  ( 0 )
 #define CFG_ENABLE_BYPASS_11D_MAX                  ( 1 )
-#define CFG_ENABLE_BYPASS_11D_DEFAULT              ( 1 )
+#define CFG_ENABLE_BYPASS_11D_DEFAULT              ( 0 )
 
 #define CFG_ENABLE_DFS_CHNL_SCAN_NAME              "gEnableDFSChnlScan"
 #define CFG_ENABLE_DFS_CHNL_SCAN_MIN               ( 0 )
@@ -1423,41 +1412,6 @@ typedef enum
 #define CFG_ENABLE_SSR_MIN                  ( 0 )
 #define CFG_ENABLE_SSR_MAX                  ( 1 )
 #define CFG_ENABLE_SSR_DEFAULT              ( 1 )
-
-#define CFG_BTC_ACTIVE_WLAN_LEN_NAME           "btcActiveWlanLen"
-#define CFG_BTC_ACTIVE_WLAN_LEN_MIN            ( 0 )
-#define CFG_BTC_ACTIVE_WLAN_LEN_MAX            ( 250000 )
-#define CFG_BTC_ACTIVE_WLAN_LEN_DEFAULT        ( 60000 )
-
-#define CFG_BTC_ACTIVE_BT_LEN_NAME             "btcActiveBtLen"
-#define CFG_BTC_ACTIVE_BT_LEN_MIN              ( 0 )
-#define CFG_BTC_ACTIVE_BT_LEN_MAX              ( 250000 )
-#define CFG_BTC_ACTIVE_BT_LEN_DEFAULT          ( 90000 )
-
-#define CFG_BTC_SAP_ACTIVE_WLAN_LEN_NAME       "btcSapActiveWlanLen"
-#define CFG_BTC_SAP_ACTIVE_WLAN_LEN_MIN        ( 0 )
-#define CFG_BTC_SAP_ACTIVE_WLAN_LEN_MAX        ( 250000 )
-#define CFG_BTC_SAP_ACTIVE_WLAN_LEN_DEFAULT    ( 60000 )
-
-#define CFG_BTC_SAP_ACTIVE_BT_LEN_NAME         "btcSapActiveBtLen"
-#define CFG_BTC_SAP_ACTIVE_BT_LEN_MIN          ( 0 )
-#define CFG_BTC_SAP_ACTIVE_BT_LEN_MAX          ( 250000 )
-#define CFG_BTC_SAP_ACTIVE_BT_LEN_DEFAULT      ( 90000 )
-
-#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_NAME                "gObssScanActiveDwellTime"
-#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MIN                 ( 5 )
-#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MAX                 ( 1000 )
-#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_DEFAULT             ( 10 )
-
-#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_NAME                "gObssScanPassiveDwellTime"
-#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MIN                 ( 10 )
-#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MAX                 ( 1000 )
-#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_DEFAULT             ( 20 )
-
-#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_NAME            "gObssScanWidthTriggerInterval"
-#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MIN             ( 10 )
-#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MAX             ( 900 )
-#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_DEFAULT         ( 200 )
 
 /*
  * VOS Trace Enable Control
@@ -1714,7 +1668,7 @@ typedef enum
 #define CFG_TDLS_IMPLICIT_TRIGGER_DEFAULT           ( 0 )
 
 #define CFG_TDLS_TX_STATS_PERIOD                    "gTDLSTxStatsPeriod"
-#define CFG_TDLS_TX_STATS_PERIOD_MIN                ( 10 )
+#define CFG_TDLS_TX_STATS_PERIOD_MIN                ( 2000 )
 #define CFG_TDLS_TX_STATS_PERIOD_MAX                ( 4294967295UL )
 #define CFG_TDLS_TX_STATS_PERIOD_DEFAULT            ( 5000 )
 
@@ -1739,7 +1693,7 @@ typedef enum
 #define CFG_TDLS_IDLE_TIMEOUT_DEFAULT               ( 5000 )
 
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD              "gTDLSIdlePacketThreshold"
-#define CFG_TDLS_IDLE_PACKET_THRESHOLD_MIN          ( 0 )
+#define CFG_TDLS_IDLE_PACKET_THRESHOLD_MIN          ( 1 )
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD_MAX          ( 40000 )
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD_DEFAULT      ( 5 )
 
@@ -1777,16 +1731,6 @@ typedef enum
 #define CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD_MIN      (10)
 #define CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD_MAX      (20)
 #define CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD_DEFAULT  (10)
-
-#define CFG_TDLS_EXTERNAL_CONTROL                   "gTDLSExternalControl"
-#define CFG_TDLS_EXTERNAL_CONTROL_MIN               (0)
-#define CFG_TDLS_EXTERNAL_CONTROL_MAX               (1)
-#define CFG_TDLS_EXTERNAL_CONTROL_DEFAULT           (0)
-
-#define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE          "gEnableTDLSOffChannel"
-#define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_MIN      (0)
-#define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_MAX      (1)
-#define CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_DEFAULT  (1)
 #endif
 
 #ifdef WLAN_ACTIVEMODE_OFFLOAD_FEATURE
@@ -1966,6 +1910,11 @@ typedef enum
 #define CFG_SPLIT_SCAN_TRAFFIC_MONITOR_TIMER_MAX       ( 10000 )
 #define CFG_SPLIT_SCAN_TRAFFIC_MONITOR_TIMER_DEFAULT   ( 5000 )
 
+#define CFG_AMSDU_SUPPORT_IN_AMPDU_NAME                "gAmsduSupportInAMPDU"
+#define CFG_AMSDU_SUPPORT_IN_AMPDU_MIN                 (0)
+#define CFG_AMSDU_SUPPORT_IN_AMPDU_MAX                 (1)
+#define CFG_AMSDU_SUPPORT_IN_AMPDU_DEFAULT             (0) //disabled
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 #define CFG_PNO_SCAN_SUPPORT                         "gPNOScanSupport"
 #define CFG_PNO_SCAN_SUPPORT_ENABLE                  ( 1 )
@@ -1978,10 +1927,30 @@ typedef enum
 #define CFG_PNO_SCAN_TIMER_REPEAT_VALUE_MAX          ( 0xffffffff )
 #endif
 
-#define CFG_AMSDU_SUPPORT_IN_AMPDU_NAME                "gAmsduSupportInAMPDU"
-#define CFG_AMSDU_SUPPORT_IN_AMPDU_MIN                 (0)
-#define CFG_AMSDU_SUPPORT_IN_AMPDU_MAX                 (1)
-#define CFG_AMSDU_SUPPORT_IN_AMPDU_DEFAULT             (0) //disabled
+#define CFG_DISABLE_ATH_NAME                       "gAthDisable"
+#define CFG_DISABLE_ATH_MIN                        (0)
+#define CFG_DISABLE_ATH_MAX                        (1)
+#define CFG_DISABLE_ATH_DEFAULT                    (0)
+
+#define CFG_BTC_ACTIVE_WLAN_LEN_NAME           "btcActiveWlanLen"
+#define CFG_BTC_ACTIVE_WLAN_LEN_MIN            ( 0 )
+#define CFG_BTC_ACTIVE_WLAN_LEN_MAX            ( 250000 )
+#define CFG_BTC_ACTIVE_WLAN_LEN_DEFAULT        ( 60000 )
+
+#define CFG_BTC_ACTIVE_BT_LEN_NAME             "btcActiveBtLen"
+#define CFG_BTC_ACTIVE_BT_LEN_MIN              ( 0 )
+#define CFG_BTC_ACTIVE_BT_LEN_MAX              ( 250000 )
+#define CFG_BTC_ACTIVE_BT_LEN_DEFAULT          ( 90000 )
+
+#define CFG_BTC_SAP_ACTIVE_WLAN_LEN_NAME       "btcSapActiveWlanLen"
+#define CFG_BTC_SAP_ACTIVE_WLAN_LEN_MIN        ( 0 )
+#define CFG_BTC_SAP_ACTIVE_WLAN_LEN_MAX        ( 250000 )
+#define CFG_BTC_SAP_ACTIVE_WLAN_LEN_DEFAULT    ( 60000 )
+
+#define CFG_BTC_SAP_ACTIVE_BT_LEN_NAME         "btcSapActiveBtLen"
+#define CFG_BTC_SAP_ACTIVE_BT_LEN_MIN          ( 0 )
+#define CFG_BTC_SAP_ACTIVE_BT_LEN_MAX          ( 250000 )
+#define CFG_BTC_SAP_ACTIVE_BT_LEN_DEFAULT      ( 90000 )
 
 /* Prefer connecting to 5G AP even if its RSSI is lower by
  gSelect5GHzMargin dBm than 2.4G AP.
@@ -1990,77 +1959,6 @@ This feature requires the dependent cfg.ini "gRoamPrefer5GHz" set to 1 */
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN_MIN             (0)
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN_MAX             (60)
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN_DEFAULT         (0) //set 0 to disable
-
-#define CFG_COALESING_IN_IBSS_NAME                "gCoalesingInIBSS"
-#define CFG_COALESING_IN_IBSS_MIN                 (0)
-#define CFG_COALESING_IN_IBSS_MAX                 (1)
-#define CFG_COALESING_IN_IBSS_DEFAULT             (0) //disabled
-
-#define CFG_DISABLE_ATH_NAME                       "gAthDisable"
-#define CFG_DISABLE_ATH_MIN                        (0)
-#define CFG_DISABLE_ATH_MAX                        (1)
-#define CFG_DISABLE_ATH_DEFAULT                    (0)
-
-//Enable Memory Debug
-#ifdef MEMORY_DEBUG
-#define CFG_ENABLE_MEMORY_DEBUG_NAME             "gEnableMemoryDebug"
-#define CFG_ENABLE_MEMORY_DEBUG_MIN              (0)
-#define CFG_ENABLE_MEMORY_DEBUG_MAX              (1)
-#define CFG_ENABLE_MEMORY_DEBUG_DEFAULT          (0)
-#endif
-
-#define CFG_OVERRIDE_COUNTRY_CODE                "gStaCountryCode"
-#define CFG_OVERRIDE_COUNTRY_CODE_DEFAULT        "000"
-
-/*Once the period expires the RSSI will be compared with Threshold
- * and if needed trigger events will be raised
- */
-#define CFG_ASD_PROBE_INTERVAL_NAME                     "gAsdProbeInterval"
-#define CFG_ASD_PROBE_INTERVAL_DEFAULT                  (50)
-#define CFG_ASD_PROBE_INTERVAL_MIN                      (10)
-#define CFG_ASD_PROBE_INTERVAL_MAX                      (100)
-
-/* RSSI Threshold used to trigger probing activity/selection process*/
-#define CFG_ASD_TRIGGER_THRESHOLD_NAME                  "gAsdTriggerThreshold"
-#define CFG_ASD_TRIGGER_THRESHOLD_DEFAULT               (-75)
-#define CFG_ASD_TRIGGER_THRESHOLD_MIN                   (-120)
-#define CFG_ASD_TRIGGER_THRESHOLD_MAX                   (0)
-
-/*RSSI Hysteresis Threshold for RSSI-RTT*/
-#define CFG_ASD_RTT_RSSI_HYST_THRESHOLD_NAME             "gAsdRTTRssiHystThreshold"
-#define CFG_ASD_RTT_RSSI_HYST_THRESHOLD_DEFAULT          (50)
-#define CFG_ASD_RTT_RSSI_HYST_THRESHOLD_MIN              (0)
-#define CFG_ASD_RTT_RSSI_HYST_THRESHOLD_MAX              (100)
-
-//Enable debug for remain on channel issues
-#define CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_NAME    "gDebugP2pRemainOnChannel"
-#define CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_DEFAULT ( 0 )
-#define CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_MIN     ( 0 )
-#define CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_MAX     ( 1 )
-
-#define CFG_CTS2S_DURING_BTC_SCO_NAME           "btcCTS2SduringSCO"
-#define CFG_CTS2S_DURING_BTC_SCO_DEFAULT        WNI_CFG_BTC_CTS2S_DURING_SCO_STADEF
-#define CFG_CTS2S_DURING_BTC_SCO_MIN            WNI_CFG_BTC_CTS2S_DURING_SCO_STAMIN
-#define CFG_CTS2S_DURING_BTC_SCO_MAX            WNI_CFG_BTC_CTS2S_DURING_SCO_STAMAX
-
-
-/*
- * Connection related log Enable/Disable.
- * 0x1 - Enable mgmt pkt logs (no probe req/rsp).
- * 0x2 - Enable EAPOL pkt logs.
- * 0x4 - Enable DHCP pkt logs.
- * 0x0 - Disable all the above connection related logs.
- */
-#define CFG_ENABLE_DEBUG_CONNECT_ISSUE             "gEnableDebugLog"
-#define CFG_ENABLE_DEBUG_CONNECT_ISSUE_MIN         (0)
-#define CFG_ENABLE_DEBUG_CONNECT_ISSUE_MAX         (0xFF)
-#define CFG_ENABLE_DEBUG_CONNECT_ISSUE_DEFAULT     (0)
-
-#define CFG_ENABLE_STRICT_REGULATORY_FOR_FCC_NAME                "gEnableStrictRegulatoryForFCC"
-#define CFG_ENABLE_STRICT_REGULATORY_FOR_FCC_MIN                 ( 0 )
-#define CFG_ENABLE_STRICT_REGULATORY_FOR_FCC_MAX                 ( 1 )
-#define CFG_ENABLE_STRICT_REGULATORY_FOR_FCC_DEFAULT             ( 1 )
-
 
 /*--------------------------------------------------------------------------- 
   Type declarations
@@ -2174,7 +2072,6 @@ typedef struct
    v_U32_t       apKeepAlivePeriod;
    v_U32_t       goKeepAlivePeriod;
    v_U32_t       apLinkMonitorPeriod;
-   v_U32_t       goLinkMonitorPeriod;
    v_U32_t       nBeaconInterval;
    v_U8_t        nTxPowerCap;   //In dBm
    v_BOOL_t      fIsLowGainOverride;
@@ -2310,10 +2207,6 @@ typedef struct
    v_U8_t                       WfqViWeight;
    v_U8_t                       WfqVoWeight;
    v_U32_t                      DelayedTriggerFrmInt;
-   v_U16_t                      BkReorderAgingTime;
-   v_U16_t                      BeReorderAgingTime;
-   v_U16_t                      ViReorderAgingTime;
-   v_U16_t                      VoReorderAgingTime;
 
    /* Wowl pattern */
    char                        wowlPattern[1024];         
@@ -2421,8 +2314,6 @@ typedef struct
    v_U32_t                     fEnableTDLSBufferSta;
    v_U32_t                     fTDLSPuapsdInactivityTimer;
    v_U32_t                     fTDLSRxFrameThreshold;
-   v_BOOL_t                    fTDLSExternalControl;
-   v_U32_t                     fEnableTDLSOffChannel;
 #endif
    v_U32_t                     enableLpwrImgTransition;
 #ifdef WLAN_SOFTAP_VSTA_FEATURE
@@ -2460,37 +2351,23 @@ typedef struct
                                                  //splitscan
    //Traffic monitor timer for split scan
    v_U32_t                     trafficMntrTmrForSplitScan;
+   v_BOOL_t                    enableOxygenNwk;
    v_U8_t                      flexConnectPowerFactor;
    v_BOOL_t                    enableIbssHeartBeatOffload;
    v_U32_t                     antennaDiversity;
    v_BOOL_t                    fEnableSNRMonitoring;
+   v_U8_t                      isAmsduSupportInAMPDU;
    /*PNO related parameters */
 #ifdef FEATURE_WLAN_SCAN_PNO
    v_BOOL_t                    configPNOScanSupport;
    v_U32_t                     configPNOScanTimerRepeatValue;
 #endif
-   v_U8_t                      isAmsduSupportInAMPDU;
-   v_U8_t                      nSelect5GHzMargin;
-   v_U8_t                      isCoalesingInIBSSAllowed;
    v_BOOL_t                    cfgAthDisable;
    v_U32_t                     cfgBtcActiveWlanLen;
    v_U32_t                     cfgBtcActiveBtLen;
    v_U32_t                     cfgBtcSapActiveWlanLen;
    v_U32_t                     cfgBtcSapActiveBtLen;
-#ifdef MEMORY_DEBUG
-   v_BOOL_t                    IsMemoryDebugSupportEnabled;
-#endif
-   char                        overrideCountryCode[4];
-   v_U32_t                     gAsdProbeInterval;
-   v_U32_t                     gAsdTriggerThreshold;
-   v_U32_t                     gAsdRTTRssiHystThreshold;
-   v_BOOL_t                    debugP2pRemainOnChannel;
-   v_U32_t                     cfgBtcCTS2SduringSCO;
-   v_U32_t                     gEnableDebugLog;
-   v_U16_t                     nOBSSScanActiveDwellTime;
-   v_U16_t                     nOBSSScanPassiveDwellTime;
-   v_U16_t                     nOBSSScanWidthTriggerInterval;
-   v_BOOL_t                    gEnableStrictRegulatoryForFCC;
+   v_U8_t                      nSelect5GHzMargin;
 } hdd_config_t;
 /*--------------------------------------------------------------------------- 
   Function declarations and documenation
@@ -2503,8 +2380,9 @@ eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode( eHddDot11Mode dot11Mode );
 VOS_STATUS hdd_execute_config_command(hdd_context_t *pHddCtx, char *command);
 tANI_BOOLEAN hdd_is_okc_mode_enabled(hdd_context_t *pHddCtx);
 
-#define VAR_OFFSET( _Struct, _Var ) (offsetof(_Struct, _Var))
-#define VAR_SIZE( _Struct, _Var ) (sizeof(((_Struct *)0)->_Var))
+#define FIELD_OFFSET(__type, __field) ((unsigned int)(&((__type *)0)->__field))
+#define VAR_OFFSET( _Struct, _Var ) ( (unsigned int) FIELD_OFFSET(_Struct, _Var ) )
+#define VAR_SIZE( _Struct, _Var ) sizeof( ((_Struct *)0)->_Var )
 
 #define VAR_FLAGS_NONE         (      0 )
 #define VAR_FLAGS_REQUIRED     ( 1 << 0 )   // bit 0 is Required or Optional

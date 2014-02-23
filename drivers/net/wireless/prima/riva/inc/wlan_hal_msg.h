@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -19,12 +19,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
- */
-
 /*==========================================================================
  *
  *  @file:     wlan_hal_msg.h
@@ -33,6 +27,8 @@
  *
  *  @author:   Kumar Anand
  *
+ *             Copyright (C) 2010, Qualcomm Technologies, Inc. 
+ *             All rights reserved.
  *
  *=========================================================================*/
 
@@ -117,10 +113,8 @@ typedef tANI_U8 tHalIpv4Addr[4];
 #define WLAN_HAL_VERSION_LENGTH  64
 
 #define WLAN_HAL_ROAM_SCAN_MAX_PROBE_SIZE     450
-/* 80 is actually NUM_RF_CHANNELS_V2, but beyond V2,
- * this number will be ignored by FW */
-#define WLAN_HAL_ROAM_SCAN_MAX_CHANNELS       80
-#define WLAN_HAL_ROAM_SCAN_RESERVED_BYTES     56
+#define WLAN_HAL_ROAM_SCAN_MAX_CHANNELS       NUM_RF_CHANNELS
+#define WLAN_HAL_ROAM_SCAN_RESERVED_BYTES     57
 
 /* Message types for messages exchanged between WDI and HAL */
 typedef enum 
@@ -441,9 +435,6 @@ typedef enum
    WLAN_HAL_IP_FORWARD_TABLE_UPDATE_IND     = 232,
 
    WLAN_HAL_AVOID_FREQ_RANGE_IND            = 233,
-   /* 2G4 HT40 OBSS scan */
-   WLAN_HAL_START_HT40_OBSS_SCAN_IND        = 254,
-   WLAN_HAL_STOP_HT40_OBSS_SCAN_IND         = 255,
   WLAN_HAL_MSG_MAX = WLAN_HAL_MSG_TYPE_MAX_ENUM_SIZE
 }tHalHostMsgType;
 
@@ -4047,7 +4038,7 @@ typedef PACKED_PRE struct PACKED_POST
 typedef PACKED_PRE struct PACKED_POST
 {
     tANI_U8   bssid[6];     /* BSSID */
-    tANI_U8   ssid[33];     /* SSID */
+    tANI_U8   ssid[32];     /* SSID */
     tANI_U8   ch;           /* Channel */
     tANI_U8   rssi;         /* RSSI or Level */
     /* Timestamp when Network was found. Used to calculate age based on timestamp in GET_RSP msg header */
@@ -5620,7 +5611,6 @@ typedef PACKED_PRE struct PACKED_POST {
    tANI_U8           nProbes;
    tANI_U16          HomeAwayTime;
    eAniBoolean       MAWCEnabled;
-   tANI_S8           RxSensitivityThreshold;
    tANI_U8           ReservedBytes[WLAN_HAL_ROAM_SCAN_RESERVED_BYTES];
    tRoamNetworkType  ConnectedNetwork;
    tMobilityDomainInfo MDID;
@@ -6117,11 +6107,6 @@ typedef enum {
     WLAN_PERIODIC_TX_PTRN  = 28,
     ADVANCE_TDLS           = 29,
     BATCH_SCAN             = 30,
-    FW_IN_TX_PATH          = 31,
-    EXTENDED_NSOFFLOAD_SLOT = 32,
-    CH_SWITCH_V1           = 33,
-    HT40_OBSS_SCAN         = 34,
-    UPDATE_CHANNEL_LIST    = 35,
     MAX_FEATURE_SUPPORTED  = 128,
 } placeHolderInCapBitmap;
 
@@ -6947,51 +6932,8 @@ typedef PACKED_PRE struct PACKED_POST
 }  tHalAvoidFreqRangeInd, *tpHalAvoidFreqRangeInd;
 
 /*---------------------------------------------------------------------------
- * WLAN_HAL_START_HT40_OBSS_SCAN_IND
  *-------------------------------------------------------------------------*/
 
-typedef enum
-{
-   WLAN_HAL_HT40_OBSS_SCAN_PARAM_START,
-   WLAN_HAL_HT40_OBSS_SCAN_PARAM_UPDATE,
-   WLAN_HAL_HT40_OBSS_SCAN_CMD_MAX = WLAN_HAL_MAX_ENUM_SIZE
-}tHT40OBssScanCmdType;
-
-typedef PACKED_PRE struct PACKED_POST
-{
-   tHT40OBssScanCmdType cmdType;
-   tSirScanType scanType;
-   tANI_U16     OBSSScanPassiveDwellTime; // In TUs
-   tANI_U16     OBSSScanActiveDwellTime;  // In TUs
-   tANI_U16     BSSChannelWidthTriggerScanInterval; // In seconds
-   tANI_U16     OBSSScanPassiveTotalPerChannel; // In TUs
-   tANI_U16     OBSSScanActiveTotalPerChannel;  // In TUs
-   tANI_U16     BSSWidthChannelTransitionDelayFactor;
-   tANI_U16     OBSSScanActivityThreshold;
-   tANI_U8      selfStaIdx;
-   tANI_U8      bssIdx;
-   tANI_U8      fortyMHZIntolerent;
-   tANI_U8      channelCount;
-   tANI_U8      channels[WLAN_HAL_ROAM_SCAN_MAX_CHANNELS];
-   tANI_U8      currentOperatingClass;
-   tANI_U16     ieFieldLen;
-   tANI_U8      ieField[WLAN_HAL_PNO_MAX_PROBE_SIZE];
-}tHT40ObssScanIndType, *tpHT40ObssScanIndType;
-
-typedef PACKED_PRE struct PACKED_POST
-{
-   tHalMsgHeader header;
-   tHT40ObssScanIndType scanHT40ObssScanParams;
-}  tHalStartHT40ObssScanIndMsg, *tpHalStartHT40ObssScanIndMsg;
-
-/*---------------------------------------------------------------------------
- * WLAN_HAL_STOP_HT40_OBSS_SCAN_IND
- *-------------------------------------------------------------------------*/
-typedef PACKED_PRE struct PACKED_POST
-{
-   tHalMsgHeader header;
-   tANI_U8       bssIdx;
-}  tHalStopHT40OBSSScanIndMsg, *tpHalStopHT40OBSSScanIndMsg;
 #if defined(__ANI_COMPILER_PRAGMA_PACK_STACK)
 #pragma pack(pop)
 #elif defined(__ANI_COMPILER_PRAGMA_PACK)
