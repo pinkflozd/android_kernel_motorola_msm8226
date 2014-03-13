@@ -1731,8 +1731,11 @@ SYSCALL_DEFINE1(swapoff, const char __user *, specialfile)
 	swap_map = p->swap_map;
 	p->swap_map = NULL;
 	p->flags = 0;
+<<<<<<< HEAD
 	spin_unlock(&p->lock);
+=======
 	frontswap_invalidate_area(type);
+>>>>>>> 1cb602e... mm: frontswap: core swap subsystem hooks and headers
 	spin_unlock(&swap_lock);
 	mutex_unlock(&swapon_mutex);
 	vfree(swap_map);
