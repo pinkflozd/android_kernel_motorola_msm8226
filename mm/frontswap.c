@@ -110,7 +110,8 @@ void __frontswap_init(unsigned type)
 	BUG_ON(sis == NULL);
 	if (sis->frontswap_map == NULL)
 		return;
-	frontswap_ops.init(type);
+	if (frontswap_enabled)
+		frontswap_ops.init(type);
 }
 EXPORT_SYMBOL(__frontswap_init);
 
