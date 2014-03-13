@@ -15,6 +15,14 @@ config ZRAM
 	  See zram.txt for more information.
 	  Project home: <https://compcache.googlecode.com/>
 
+config ZRAM_NUM_DEVICES
+	int "Default number of zram devices"
+	depends on ZRAM
+	range 1 32
+	default 4
+	help
+	  Select default number of zram devices. You c
+
 config ZRAM_DEBUG
 	bool "Compressed RAM block device debug support"
 	depends on ZRAM
