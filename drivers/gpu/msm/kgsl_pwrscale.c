@@ -195,7 +195,7 @@ int kgsl_devfreq_target(struct device *dev, unsigned long *freq, u32 flags)
 
 	pwr = &device->pwrctrl;
 
-	mutex_lock(&device->mutex);
+	kgsl_mutex_lock(&device->mutex, &device->mutex_owner);
 	cur_freq = kgsl_pwrctrl_active_freq(pwr);
 	level = pwr->active_pwrlevel;
 
@@ -232,7 +232,7 @@ int kgsl_devfreq_target(struct device *dev, unsigned long *freq, u32 flags)
 
 	*freq = kgsl_pwrctrl_active_freq(pwr);
 
-	mutex_unlock(&device->mutex);
+	kgsl_mutex_unlock(&device->mutex, &device->mutex_owner);
 	return 0;
 }
 EXPORT_SYMBOL(kgsl_devfreq_target);
@@ -259,7 +259,7 @@ int kgsl_devfreq_get_dev_status(struct device *dev,
 
 	pwrscale = &device->pwrscale;
 
-	mutex_lock(&device->mutex);
+	kgsl_mutex_lock(&device->mutex, &device->mutex_owner);
 	/* make sure we don't turn on clocks just to read stats */
 	if (device->state == KGSL_STATE_ACTIVE) {
 		struct kgsl_power_stats extra;
@@ -287,7 +287,7 @@ int kgsl_devfreq_get_dev_status(struct device *dev,
 	trace_kgsl_pwrstats(device, stat->total_time, &pwrscale->accum_stats);
 	memset(&pwrscale->accum_stats, 0, sizeof(pwrscale->accum_stats));
 
-	mutex_unlock(&device->mutex);
+	kgsl_mutex_unlock(&device->mutex, &device->mutex_owner);
 
 	return 0;
 }
@@ -310,9 +310,9 @@ int kgsl_devfreq_get_cur_freq(struct device *dev, unsigned long *freq)
 	if (freq == NULL)
 		return -EINVAL;
 
-	mutex_lock(&device->mutex);
+	kgsl_mutex_lock(&device->mutex, &device->mutex_owner);
 	*freq = kgsl_pwrctrl_active_freq(&device->pwrctrl);
-	mutex_unlock(&device->mutex);
+	kgsl_mutex_unlock(&device->mutex, &device->mutex_owner);
 
 	return 0;
 }
