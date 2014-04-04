@@ -3133,4 +3133,12 @@ config FORCE_FAST_CHARGE
 	help
 		A simple sysfs interface to force adapters that
 		are detected as USB to charge as AC.
+
+config LCD_KCAL
+	depends on ARCH_MSM
+	default y
+	bool "LG's LCD calibration code"
+	help
+	  Provides LCD calibration capability
+
 endif
