@@ -635,7 +635,7 @@ static int mdss_dsi_panel_esd_init(struct mdss_dsi_ctrl_pdata *ctrl)
 	int ret;
 	struct mdss_panel_esd_pdata *esd_data = &ctrl->panel_esd_data;
 
-	INIT_DEFERRABLE_WORK(&ctrl->esd_work, mdss_panel_esd_work);
+	INIT_DELAYED_WORK_DEFERRABLE(&ctrl->esd_work, mdss_panel_esd_work);
 
 	if (esd_data->esd_detect_mode == ESD_TE_DET) {
 		init_completion(&esd_data->te_detected);
