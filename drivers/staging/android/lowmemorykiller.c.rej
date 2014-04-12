@@ -1,10 +1,38 @@
 --- drivers/staging/android/lowmemorykiller.c
 +++ drivers/staging/android/lowmemorykiller.c
-@@ -40,6 +40,7 @@
- #include <linux/mutex.h>
- #include <linux/delay.h>
- #include <linux/swap.h>
-+#include <linux/powersuspend.h>
+@@ -168,6 +168,35 @@
+ 	}
+ }
  
- #ifdef CONFIG_HIGHMEM
- #define _ZONE ZONE_HIGHMEM
++#ifdef CONFIG_HIGHMEM
++void adjust_gfp_mask(gfp_t *gfp_mask)
++{
++	struct zone *preferred_zone;
++	struct zonelist *zonelist;
++	enum zone_type high_zoneidx;
++
++	if (current_is_kswapd()) {
++		zonelist = node_zonelist(0, *gfp_mask);
++		high_zoneidx = gfp_zone(*gfp_mask);
++		first_zones_zonelist(zonelist, high_zoneidx, NULL,
++				&preferred_zone);
++
++		if (high_zoneidx == ZONE_NORMAL) {
++			if (zone_watermark_ok_safe(preferred_zone, 0,
++					high_wmark_pages(preferred_zone), 0,
++					0))
++				*gfp_mask |= __GFP_HIGHMEM;
++		} else if (high_zoneidx == ZONE_HIGHMEM) {
++			*gfp_mask |= __GFP_HIGHMEM;
++		}
++	}
++}
++#else
++void adjust_gfp_mask(gfp_t *unused)
++{
++}
++#endif
++
+ void tune_lmk_param(int *other_free, int *other_file, struct shrink_control *sc)
+ {
+ 	gfp_t gfp_mask;
