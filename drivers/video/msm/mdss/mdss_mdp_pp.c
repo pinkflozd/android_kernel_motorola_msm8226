@@ -1505,6 +1505,7 @@ void mdss_mdp_pp_argc_kcal(int kr, int kg, int kb)//struct mdss_mdp_ctl *ctl,
 int update_preset_lcdc_lut_s2d(int lut_trigger)
 {
 	int ret = 0, flag = 0;
+	int xr, xg, xb;
 
 	if (lut_trigger == 1) {
 		g_kcal_r = g_kcal_r - down_kcal;
@@ -1526,6 +1527,9 @@ int update_preset_lcdc_lut_s2d(int lut_trigger)
 	}
 
 	if (lut_trigger == 2) {
+		xr = g_kcal_r;
+		xg = g_kcal_g;
+		xb = g_kcal_b;
 		g_kcal_r = g_kcal_r + up_kcal;
 		g_kcal_g = g_kcal_g + up_kcal;
 		g_kcal_b = g_kcal_b + up_kcal;
@@ -1536,7 +1540,8 @@ int update_preset_lcdc_lut_s2d(int lut_trigger)
 		if (g_kcal_b > 255)
 			g_kcal_b = 255;
 		if ((g_kcal_r == 255) && (g_kcal_g == 255) && (g_kcal_b == 255))
-			flag = 1;
+			if ((xr == 255) && (xg == 255) && (xb == 255))
+				flag = 1;
 	}
 
 	pr_info("sweep2dim: red=[%d], green=[%d], blue=[%d]\n", g_kcal_r, g_kcal_g, g_kcal_b);
