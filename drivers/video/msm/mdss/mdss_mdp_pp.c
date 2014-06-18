@@ -1504,7 +1504,7 @@ void mdss_mdp_pp_argc_kcal(int kr, int kg, int kb)//struct mdss_mdp_ctl *ctl,
 
 int update_preset_lcdc_lut_s2d(int lut_trigger)
 {
-	int ret = 0;
+	int ret = 0, flag = 0;
 
 	if (lut_trigger == 1) {
 		g_kcal_r = g_kcal_r - down_kcal;
@@ -1521,6 +1521,7 @@ int update_preset_lcdc_lut_s2d(int lut_trigger)
 			g_kcal_r = 255;
 			g_kcal_g = 255;
 			g_kcal_b = 255;
+			flag = 1;
 		}
 	}
 
@@ -1534,11 +1535,17 @@ int update_preset_lcdc_lut_s2d(int lut_trigger)
 			g_kcal_g = 255;
 		if (g_kcal_b > 255)
 			g_kcal_b = 255;
+		if ((g_kcal_r == 255) && (g_kcal_g == 255) && (g_kcal_b == 255))
+			flag = 1;
 	}
 
 	pr_info("sweep2dim: red=[%d], green=[%d], blue=[%d]\n", g_kcal_r, g_kcal_g, g_kcal_b);
 
-	mdss_mdp_pp_argc_kcal(g_kcal_r,g_kcal_g,g_kcal_b);
+	if (flag == 0)
+		mdss_mdp_pp_argc_kcal(g_kcal_r,g_kcal_g,g_kcal_b);
+
+	if (flag == 1)
+		flag = 0;
 
 	if (ret)
 		pr_err("%s: failed to set lut! %d\n", __func__, ret);
