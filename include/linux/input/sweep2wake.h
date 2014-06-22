@@ -24,9 +24,9 @@
 extern bool s2w_scr_suspended;
 extern int s2w_switch, s2w_s2sonly;
 
-extern int s2d_enabled, lut_trigger;
+extern int s2d_enabled;
 extern int down_kcal, up_kcal;
-extern int update_preset_lcdc_lut_s2d(void);
+extern int update_preset_lcdc_lut_s2d(int lut_trigger);
 extern void sweep2wake_pwrtrigger(void);
 
 #endif	/* _LINUX_SWEEP2WAKE_H */

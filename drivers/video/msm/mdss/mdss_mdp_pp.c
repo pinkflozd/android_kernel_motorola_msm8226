@@ -30,7 +30,7 @@ extern int g_kcal_b;
 extern struct kcal_data kcal_value;
 #endif
 
-extern int lut_trigger, down_kcal, up_kcal;
+extern int down_kcal, up_kcal;
 extern void sweep2wake_pwrtrigger(void);
 
 struct mdp_csc_cfg mdp_csc_convert[MDSS_MDP_MAX_CSC] = {

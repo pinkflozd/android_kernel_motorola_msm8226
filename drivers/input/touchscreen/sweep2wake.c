@@ -76,6 +76,7 @@ MODULE_LICENSE("GPLv2");
 /* Resources */
 int s2w_switch = S2W_DEFAULT;
 bool s2w_scr_suspended = false;
+int s2d_enabled = 0;
 static int touch_x = 0, touch_y = 0;
 static bool touch_x_called = false, touch_y_called = false;
 static bool exec_count = true;
@@ -95,10 +96,6 @@ static int s2w_threshold = DEFAULT_S2W_X_FINAL;
 
 static int s2w_swap_coord = 0;
 
-int s2d_enabled = 0;
-module_param(s2d_enabled, int, 0644);
-int lut_trigger = 0;
-module_param(lut_trigger, int, 0644);
 int down_kcal = 50;
 module_param(down_kcal, int, 0664);
 int up_kcal = 50;
@@ -298,9 +295,7 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
 					if (sweep_coord < DEFAULT_S2W_X_FINAL) {
 						if (exec_count) {
 							pr_info(LOGTAG"DIM\n");
-							lut_trigger = 1;
-							update_preset_lcdc_lut_s2d();
-							lut_trigger = 0;
+							update_preset_lcdc_lut_s2d(1);
 							exec_count = false;
 						}
 					}
@@ -327,9 +322,7 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
 					if (sweep_coord > S2W_X_B5) {
 						if (exec_count) {
 							pr_info(LOGTAG"BRIGHT\n");
-							lut_trigger = 2;
-							update_preset_lcdc_lut_s2d();
-							lut_trigger = 0;
+							update_preset_lcdc_lut_s2d(2);
 							exec_count = false;
 						}
 					}
@@ -618,6 +611,29 @@ static ssize_t s2w_sweep2wake_dump(struct device *dev,
 static DEVICE_ATTR(sweep2wake, (S_IWUSR|S_IRUGO),
 	s2w_sweep2wake_show, s2w_sweep2wake_dump);
 
+static ssize_t sweep2dim_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	size_t count = 0;
+
+	count += sprintf(buf, "%d\n", s2d_enabled);
+
+	return count;
+}
+
+static ssize_t sweep2dim_dump(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	if (buf[0] >= '0' && buf[0] <= '1' && buf[1] == '\n')
+                if (s2d_enabled != buf[0] - '0')
+		        s2d_enabled = buf[0] - '0';
+
+	return count;
+}
+
+static DEVICE_ATTR(sweep2dim, (S_IWUSR|S_IRUGO),
+	sweep2dim_show, sweep2dim_dump);
+
 static ssize_t s2w_version_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -704,6 +720,10 @@ static int __init sweep2wake_init(void)
 	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2wake.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for sweep2wake\n", __func__);
+	}
+	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2dim.attr);
+	if (rc) {
+		pr_warn("%s: sysfs_create_file failed for sweep2dim\n", __func__);
 	}
 	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2wake_version.attr);
 	if (rc) {
