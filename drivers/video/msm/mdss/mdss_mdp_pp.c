@@ -31,6 +31,7 @@ extern struct kcal_data kcal_value;
 #endif
 
 extern int lut_trigger, down_kcal, up_kcal;
+extern void sweep2wake_pwrtrigger(void);
 
 struct mdp_csc_cfg mdp_csc_convert[MDSS_MDP_MAX_CSC] = {
 	[MDSS_MDP_CSC_RGB2RGB] = {
@@ -1501,7 +1502,7 @@ void mdss_mdp_pp_argc_kcal(int kr, int kg, int kb)//struct mdss_mdp_ctl *ctl,
 	pr_info(">>>>> %s \n", __func__);
 }
 
-int update_preset_lcdc_lut(void)
+int update_preset_lcdc_lut_s2d(int lut_trigger)
 {
 	int ret = 0;
 
@@ -1515,6 +1516,12 @@ int update_preset_lcdc_lut(void)
 			g_kcal_g = 0;
 		if (g_kcal_b < 0)
 			g_kcal_b = 0;
+		if ((g_kcal_r == 0) && (g_kcal_g == 0) && (g_kcal_b == 0)) {
+			sweep2wake_pwrtrigger();
+			g_kcal_r = 255;
+			g_kcal_g = 255;
+			g_kcal_b = 255;
+		}
 	}
 
 	if (lut_trigger == 2) {
@@ -1528,6 +1535,20 @@ int update_preset_lcdc_lut(void)
 		if (g_kcal_b > 255)
 			g_kcal_b = 255;
 	}
+
+	pr_info("sweep2dim: red=[%d], green=[%d], blue=[%d]\n", g_kcal_r, g_kcal_g, g_kcal_b);
+
+	mdss_mdp_pp_argc_kcal(g_kcal_r,g_kcal_g,g_kcal_b);
+
+	if (ret)
+		pr_err("%s: failed to set lut! %d\n", __func__, ret);
+
+	return ret;
+}
+
+int update_preset_lcdc_lut(void)
+{
+	int ret = 0;
 
 	pr_info("update_preset_lcdc_lut red=[%d], green=[%d], blue=[%d]\n", g_kcal_r, g_kcal_g, g_kcal_b);
 
