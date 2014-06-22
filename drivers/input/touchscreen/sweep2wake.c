@@ -136,7 +136,7 @@ static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
 static DECLARE_WORK(sweep2wake_presspwr_work, sweep2wake_presspwr);
 
 /* PowerKey trigger */
-static void sweep2wake_pwrtrigger(void) {
+void sweep2wake_pwrtrigger(void) {
 	schedule_work(&sweep2wake_presspwr_work);
         return;
 }
@@ -299,7 +299,7 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
 						if (exec_count) {
 							pr_info(LOGTAG"DIM\n");
 							lut_trigger = 1;
-							update_preset_lcdc_lut();
+							update_preset_lcdc_lut_s2d();
 							lut_trigger = 0;
 							exec_count = false;
 						}
@@ -328,7 +328,7 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
 						if (exec_count) {
 							pr_info(LOGTAG"BRIGHT\n");
 							lut_trigger = 2;
-							update_preset_lcdc_lut();
+							update_preset_lcdc_lut_s2d();
 							lut_trigger = 0;
 							exec_count = false;
 						}
