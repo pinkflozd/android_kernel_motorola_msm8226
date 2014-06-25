@@ -1518,12 +1518,10 @@ int update_preset_lcdc_lut_s2d(int lut_trigger)
 		if (g_kcal_b < 0)
 			g_kcal_b = 0;
 		if ((g_kcal_r == 0) && (g_kcal_g == 0) && (g_kcal_b == 0)) {
-			sweep2wake_pwrtrigger();
 			g_kcal_r = 255;
 			g_kcal_g = 255;
 			g_kcal_b = 255;
-			mdss_mdp_pp_argc_kcal(g_kcal_r,g_kcal_g,g_kcal_b);
-			flag = 1;
+			sweep2wake_pwrtrigger();
 		}
 	}
 
