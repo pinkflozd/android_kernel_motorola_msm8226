@@ -95,6 +95,15 @@ static int s2w_threshold = DEFAULT_S2W_X_FINAL;
 
 static int s2w_swap_coord = 0;
 
+int s2d_enabled = 0;
+module_param(s2d_enabled, int, 0644);
+int lut_trigger = 0;
+module_param(lut_trigger, int, 0644);
+int down_kcal = 50;
+module_param(down_kcal, int, 0664);
+int up_kcal = 50;
+module_param(up_kcal, int, 0644);
+
 /* Read cmdline for s2w */
 static int __init read_s2w_cmdline(char *s2w)
 {
@@ -153,6 +162,10 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
         pr_info(LOGTAG"x,y(%4d,%4d) single:%s\n",
                 sweep_coord, sweep_height, (single_touch) ? "true" : "false");
 #endif
+
+	if ((s2w_switch > 0) && (s2d_enabled == 1))
+		s2d_enabled = 0;
+
 	if (s2w_swap_coord == 1) {
 		//swap the coordinate system
 		swap_temp1 = sweep_coord;
@@ -189,7 +202,7 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
 			}
 		}
 	//power off
-	} else if ((single_touch) && (s2w_scr_suspended == false) && (s2w_switch > 0)) {
+	} else if ((single_touch) && (s2w_scr_suspended == false) && (s2w_switch > 0) && (s2d_enabled == 0)) {
 		if (s2w_swap_coord == 1) {
 			//swap back for off scenario ONLY
 			swap_temp1 = sweep_coord;
@@ -248,6 +261,75 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
 						if (exec_count) {
 							pr_info(LOGTAG"OFF\n");
 							sweep2wake_pwrtrigger();
+							exec_count = false;
+						}
+					}
+				}
+			}
+		}
+	} else if ((single_touch) && (s2w_scr_suspended == false) && (s2d_enabled == 1)) {
+		if (s2w_swap_coord == 1) {
+			//swap back for off scenario ONLY
+			swap_temp1 = sweep_coord;
+			swap_temp2 = sweep_height;
+
+			sweep_height = swap_temp1;
+			sweep_coord = swap_temp2;
+		}
+
+		scr_on_touch=true;
+		prev_coord = (DEFAULT_S2W_X_MAX - DEFAULT_S2W_X_FINAL);
+		next_coord = DEFAULT_S2W_X_B2;
+		if ((barrier[0] == true) ||
+		   ((sweep_coord < prev_coord) &&
+		    (sweep_coord > next_coord) &&
+		    (sweep_height > DEFAULT_S2W_Y_LIMIT))) {
+			prev_coord = next_coord;
+			next_coord = DEFAULT_S2W_X_B1;
+			barrier[0] = true;
+			if ((barrier[1] == true) ||
+			   ((sweep_coord < prev_coord) &&
+			    (sweep_coord > next_coord) &&
+			    (sweep_height > DEFAULT_S2W_Y_LIMIT))) {
+				prev_coord = next_coord;
+				barrier[1] = true;
+				if ((sweep_coord < prev_coord) &&
+				    (sweep_height > DEFAULT_S2W_Y_LIMIT)) {
+					if (sweep_coord < DEFAULT_S2W_X_FINAL) {
+						if (exec_count) {
+							pr_info(LOGTAG"DIM\n");
+							lut_trigger = 1;
+							update_preset_lcdc_lut();
+							lut_trigger = 0;
+							exec_count = false;
+						}
+					}
+				}
+			}
+		}
+		r_prev_coord = S2W_X_B0;
+		r_next_coord = S2W_X_B3;
+		if ((r_barrier[0] == true) ||
+		   ((sweep_coord > r_prev_coord) &&
+		    (sweep_coord < r_next_coord) &&
+		    (sweep_height > DEFAULT_S2W_Y_LIMIT))) {
+			r_prev_coord = r_next_coord;
+			r_next_coord = S2W_X_B4;
+			r_barrier[0] = true;
+			if ((r_barrier[1] == true) ||
+			   ((sweep_coord > r_prev_coord) &&
+			    (sweep_coord < r_next_coord) &&
+			    (sweep_height > DEFAULT_S2W_Y_LIMIT))) {
+				r_prev_coord = r_next_coord;
+				r_barrier[1] = true;
+				if ((sweep_coord > r_prev_coord) &&
+				    (sweep_height > DEFAULT_S2W_Y_LIMIT)) {
+					if (sweep_coord > S2W_X_B5) {
+						if (exec_count) {
+							pr_info(LOGTAG"BRIGHT\n");
+							lut_trigger = 2;
+							update_preset_lcdc_lut();
+							lut_trigger = 0;
 							exec_count = false;
 						}
 					}
