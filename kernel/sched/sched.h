@@ -1221,7 +1221,6 @@ static inline u64 steal_ticks(u64 steal)
 }
 #endif
 
-#define NR_AVE_PERIOD_EXP      27
 #define NR_AVE_SCALE(x)                ((x) << FSHIFT)
 #define NR_AVE_PERIOD          (1 << NR_AVE_PERIOD_EXP)
 #define NR_AVE_DIV_PERIOD(x)   ((x) >> NR_AVE_PERIOD_EXP)
