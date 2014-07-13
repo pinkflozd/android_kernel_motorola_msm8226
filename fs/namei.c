@@ -2936,7 +2936,7 @@ SYSCALL_DEFINE3(symlinkat, const char __user *, oldname,
 		int, newdfd, const char __user *, newname)
 {
 	int error;
-	char *from = NULL;
+	char *from;
 	struct dentry *dentry;
 	struct path path;
 
