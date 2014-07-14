@@ -76,14 +76,14 @@ static struct clkctl_acpu_speed acpu_freq_tbl_8226_1p1[] = {
 
 static struct clkctl_acpu_speed acpu_freq_tbl_8226_1p2[] = {
 #ifdef CPU_UNDERCLOCK
-	{ 1,  192000, ACPUPLL, 5, 2,   CPR_CORNER_2,    0, 4 },
+	{ 1,  192000, ACPUPLL, 5, 2,   CPR_CORNER_1,    0, 2 },
 #endif
-	{ 1,  300000, PLL0,    4, 2,   CPR_CORNER_2,    0, 4 },
-	{ 1,  384000, ACPUPLL, 5, 2,   CPR_CORNER_2,    0, 4 },
-	{ 1,  600000, PLL0,    4, 0,   CPR_CORNER_4, 0, 6 },
-	{ 1,  787200, ACPUPLL, 5, 0,   CPR_CORNER_4, 0, 6 },
-	{ 1,  998400, ACPUPLL, 5, 0,   CPR_CORNER_12,  0, 7 },
-	{ 1, 1094400, ACPUPLL, 5, 0,   CPR_CORNER_12,  0, 7 },
+	{ 1,  300000, PLL0,    4, 2,   CPR_CORNER_2,    0, 3 },
+	{ 1,  384000, ACPUPLL, 5, 2,   CPR_CORNER_3,    0, 4 },
+	{ 1,  600000, PLL0,    4, 0,   CPR_CORNER_4, 0, 5 },
+	{ 1,  787200, ACPUPLL, 5, 0,   CPR_CORNER_5, 0, 6 },
+	{ 1,  998400, ACPUPLL, 5, 0,   CPR_CORNER_8,  0, 7 },
+	{ 1, 1094400, ACPUPLL, 5, 0,   CPR_CORNER_10,  0, 7 },
 	{ 1, 1190400, ACPUPLL, 5, 0,   CPR_CORNER_12,  0, 8 },
 	{ 0 }
 };
