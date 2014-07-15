@@ -354,11 +354,17 @@ CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
 CFLAGS_MODULE   = -DMODULE -fno-pic -mcpu=cortex-a7 \
 		  -marm -mfpu=neon-vfpv4 \
-		  -mvectorize-with-neon-quad -munaligned-access
+		  -mvectorize-with-neon-quad -fgcse-after-reload -fgcse-sm -fgcse-las \
+		  -ftree-loop-im -ftree-loop-ivcanon \
+		  -fivopts -ftree-vectorize  \
+		  -ffast-math
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  =
 CFLAGS_KERNEL	= -mcpu=cortex-a7 -mtune=cortex-a7 \
-		  -marm -mfpu=neon-vfpv4 -mvectorize-with-neon-quad -munaligned-access
+		  -marm -mfpu=neon-vfpv4 -mvectorize-with-neon-quad  -fgcse-after-reload -fgcse-sm -fgcse-las \
+		  -ftree-loop-im -ftree-loop-ivcanon \
+		  -fivopts -ftree-vectorize \
+		  -ffast-math
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
@@ -377,7 +383,10 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks \
-		   -marm -mfpu=neon-vfpv4
+		   -marm -mfpu=neon-vfpv4 -fgcse-after-reload -fgcse-sm -fgcse-las \
+		  -ftree-loop-im -ftree-loop-ivcanon \
+		  -fivopts -ftree-vectorize \
+		  -ffast-math
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
