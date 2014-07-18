@@ -1,2 +1,2 @@
-ccflags-y := -O3
+ccflags-y := -Ofast
 obj-y += msm_ion.o ion_cp_common.o ion_iommu_map.o

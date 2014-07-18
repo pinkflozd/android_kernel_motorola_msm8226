@@ -250,8 +250,8 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = ccache gcc
 HOSTCXX      = ccache g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer
-HOSTCXXFLAGS = -O3
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
+HOSTCXXFLAGS = -O2
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -350,22 +350,15 @@ KALLSYMS	= scripts/kallsyms
 PERL		= perl
 CHECK		= sparse
 
+CC_OPTIMIZATIONS = -mcpu=cortex-a7 -mtune=cortex-a7 -mfpu=neon-vfpv4 \
+		  -marm -mvectorize-with-neon-quad -munaligned-access
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   = -DMODULE -fno-pic -mcpu=cortex-a7 \
-		  -marm -mfpu=neon-vfpv4 \
-		  -mvectorize-with-neon-quad -fgcse-after-reload -fgcse-sm -fgcse-las \
-		  -ftree-loop-im -ftree-loop-ivcanon \
-		  -fivopts -ftree-vectorize  \
-		  -ffast-math
-AFLAGS_MODULE   =
+CFLAGS_MODULE   = -DMODULE -fno-pic $(CC_OPTIMIZATIONS)
+AFLAGS_MODULE   = $(CC_OPTIMIZATIONS)
 LDFLAGS_MODULE  =
-CFLAGS_KERNEL	= -mcpu=cortex-a7 -mtune=cortex-a7 \
-		  -marm -mfpu=neon-vfpv4 -mvectorize-with-neon-quad  -fgcse-after-reload -fgcse-sm -fgcse-las \
-		  -ftree-loop-im -ftree-loop-ivcanon \
-		  -fivopts -ftree-vectorize \
-		  -ffast-math
-AFLAGS_KERNEL	=
+CFLAGS_KERNEL	= $(CC_OPTIMIZATIONS)
+AFLAGS_KERNEL	= $(CC_OPTIMIZATIONS)
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
 
@@ -383,10 +376,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks \
-		   -marm -mfpu=neon-vfpv4 -fgcse-after-reload -fgcse-sm -fgcse-las \
-		  -ftree-loop-im -ftree-loop-ivcanon \
-		  -fivopts -ftree-vectorize \
-		  -ffast-math
+		   $(CC_OPTIMIZATIONS)
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__

@@ -42,6 +42,7 @@ static struct msm_bus_paths bw_level_tbl_8226[] = {
 	[6] = BW_MBPS(3200), /* At least 400 MHz on bus. */
 	[7] = BW_MBPS(4264), /* At least 533 MHz on bus. */
 	[8] = BW_MBPS(4528), /* At least 566 MHz on bus. */
+	[9] = BW_MBPS(4800), /* At least 600 MHz on bus. */
 };
 
 static struct msm_bus_paths bw_level_tbl_8610[] = {
@@ -76,15 +77,15 @@ static struct clkctl_acpu_speed acpu_freq_tbl_8226_1p1[] = {
 
 static struct clkctl_acpu_speed acpu_freq_tbl_8226_1p2[] = {
 #ifdef CPU_UNDERCLOCK
-	{ 1,  192000, ACPUPLL, 5, 2,   CPR_CORNER_1,    0, 2 },
+	{ 1,  192000, ACPUPLL, 5, 2,   CPR_CORNER_1,    0, 1 },
 #endif
-	{ 1,  300000, PLL0,    4, 2,   CPR_CORNER_2,    0, 3 },
-	{ 1,  384000, ACPUPLL, 5, 2,   CPR_CORNER_3,    0, 4 },
-	{ 1,  600000, PLL0,    4, 0,   CPR_CORNER_4, 0, 5 },
-	{ 1,  787200, ACPUPLL, 5, 0,   CPR_CORNER_5, 0, 6 },
-	{ 1,  998400, ACPUPLL, 5, 0,   CPR_CORNER_8,  0, 7 },
-	{ 1, 1094400, ACPUPLL, 5, 0,   CPR_CORNER_10,  0, 7 },
-	{ 1, 1190400, ACPUPLL, 5, 0,   CPR_CORNER_12,  0, 8 },
+	{ 1,  300000, PLL0,    4, 2,   CPR_CORNER_2,    0, 2 },
+	{ 1,  384000, ACPUPLL, 5, 2,   CPR_CORNER_4,    0, 4 },
+	{ 1,  600000, PLL0,    4, 0,   CPR_CORNER_4, 0, 6 },
+	{ 1,  787200, ACPUPLL, 5, 0,   CPR_CORNER_8, 0, 6 },
+	{ 1,  998400, ACPUPLL, 5, 0,   CPR_CORNER_10,  0, 7 },
+	{ 1, 1094400, ACPUPLL, 5, 0,   CPR_CORNER_12,  0, 8 },
+	{ 1, 1190400, ACPUPLL, 5, 0,   CPR_CORNER_15,  0, 9 },
 	{ 0 }
 };
 
@@ -107,7 +108,7 @@ static struct clkctl_acpu_speed acpu_freq_tbl_8226_1p4[] = {
 
 static struct clkctl_acpu_speed acpu_freq_tbl_8226_1p6[] = {
 #ifdef CPU_UNDERCLOCK
-	{ 1,  192000, ACPUPLL, 5, 2,   CPR_CORNER_2,    0, 4 },
+	{ 1,  192000, ACPUPLL, 5, 2,   CPR_CORNER_1,    0, 4 },
 #endif
 	{ 1,  300000, PLL0,    4, 2,   CPR_CORNER_2,    0, 4 },
 	{ 1,  384000, ACPUPLL, 5, 2,   CPR_CORNER_2,    0, 4 },
@@ -115,12 +116,13 @@ static struct clkctl_acpu_speed acpu_freq_tbl_8226_1p6[] = {
 	{ 1,  787200, ACPUPLL, 5, 0,   CPR_CORNER_4, 0, 6 },
 	{ 1,  998400, ACPUPLL, 5, 0,   CPR_CORNER_5,  0, 7 },
 	{ 1, 1094400, ACPUPLL, 5, 0,   CPR_CORNER_6,  0, 7 },
-	{ 1, 1190400, ACPUPLL, 5, 0,   CPR_CORNER_7,  0, 7 },
-	{ 1, 1305600, ACPUPLL, 5, 0,   CPR_CORNER_8,  0, 7 },
-	{ 1, 1344000, ACPUPLL, 5, 0,   CPR_CORNER_9,  0, 7 },
-	{ 1, 1401600, ACPUPLL, 5, 0,   CPR_CORNER_10,  0, 7 },
-	{ 1, 1497600, ACPUPLL, 5, 0,   CPR_CORNER_11,  0, 7 },
-	{ 1, 1593600, ACPUPLL, 5, 0,   CPR_CORNER_12,  0, 7 },
+	{ 1, 1190400, ACPUPLL, 5, 0,   CPR_CORNER_8,  0, 7 },
+	{ 1, 1305600, ACPUPLL, 5, 0,   CPR_CORNER_10,  0, 8 },
+	{ 1, 1344000, ACPUPLL, 5, 0,   CPR_CORNER_11,  0, 8 },
+	{ 1, 1401600, ACPUPLL, 5, 0,   CPR_CORNER_12,  0, 8 },
+	{ 1, 1497600, ACPUPLL, 5, 0,   CPR_CORNER_13,  0, 9 },
+	{ 1, 1593600, ACPUPLL, 5, 0,   CPR_CORNER_14,  0, 9 },
+	{ 1, 1689600, ACPUPLL, 5, 0,   CPR_CORNER_15,  0, 9 },
 	{ 0 }
 };
 
@@ -148,7 +150,7 @@ static struct acpuclk_drv_data drv_data = {
 	.freq_tbl = acpu_freq_tbl_8226_1p1,
 	.pvs_tables = pvs_tables_8226,
 	.bus_scale = &bus_client_pdata,
-	.vdd_max_cpu = CPR_CORNER_12,
+	.vdd_max_cpu = CPR_CORNER_14,
 	.src_clocks = {
 		[PLL0].name = "gpll0",
 		[ACPUPLL].name = "a7sspll",

@@ -64,6 +64,9 @@ enum cpr_corner_enum {
 	CPR_CORNER_10,
 	CPR_CORNER_11,
 	CPR_CORNER_12,
+	CPR_CORNER_13,
+	CPR_CORNER_14,
+	CPR_CORNER_15,
 };
 
 /**
