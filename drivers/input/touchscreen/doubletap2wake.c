@@ -56,7 +56,7 @@ MODULE_LICENSE("GPLv2");
 
 /* Tuneables */
 #define DT2W_DEBUG		0
-#define DT2W_DEFAULT		1
+#define DT2W_DEFAULT		0
 
 #define DT2W_PWRKEY_DUR		10
 #define DT2W_FEATHER		200

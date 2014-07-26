@@ -87,13 +87,13 @@ static void adreno_input_work(struct work_struct *work);
  * They have to be tuned and compare with the tz governor anyway.
  */
 static struct devfreq_simple_ondemand_data adreno_ondemand_data = {
-	.upthreshold = 80,
-	.downdifferential = 20,
+	.upthreshold = 70,
+	.downdifferential = 10,
 };
 
 static struct devfreq_msm_adreno_tz_data adreno_tz_data = {
 	.bus = {
-		.max = 533,
+		.max = 550,
 	},
 	.device_id = KGSL_DEVICE_3D0,
 };
