@@ -1913,7 +1913,7 @@ static int __do_proc_dointvec(void *tbl_data, struct ctl_table *table,
 	int *i, vleft, first = 1, err = 0;
 	unsigned long page = 0;
 	size_t left;
-	char *kbuf = 0;
+	char *kbuf;
 	
 	if (!tbl_data || !table->maxlen || !*lenp || (*ppos && !write)) {
 		*lenp = 0;
@@ -2450,7 +2450,7 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 
 	if (write) {
 		unsigned long page = 0;
-		char *kbuf = NULL;
+		char *kbuf;
 
 		if (left > PAGE_SIZE - 1)
 			left = PAGE_SIZE - 1;
