@@ -250,8 +250,8 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = ccache gcc
 HOSTCXX      = ccache g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
-HOSTCXXFLAGS = -O2
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer
+HOSTCXXFLAGS = -O3
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -350,8 +350,9 @@ KALLSYMS	= scripts/kallsyms
 PERL		= perl
 CHECK		= sparse
 
-PINKFLAGS	= -mcpu=cortex-a7 -mtune=cortex-a7 -mfpu=neon-vfpv4 \
-		  -marm -mvectorize-with-neon-quad -munaligned-access
+PINKFLAGS	= -march=armv7ve -mcpu=cortex-a7 -mtune=cortex-a7 -mfpu=neon-vfpv4 \
+		  -marm -pipe -mvectorize-with-neon-quad -munaligned-access -ffast-math \
+		  -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -fsingle-precision-constant
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
